@@ -8,7 +8,7 @@ COPY templates /templates
 
 WORKDIR /app
 
-RUN CGO_ENABLED=0 go build -o mailApp ./cmd/api
+RUN go build -o mailApp ./cmd/api
 
 RUN chmod +x /app/mailApp
 

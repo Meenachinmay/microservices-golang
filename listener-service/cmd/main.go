@@ -11,7 +11,58 @@ import (
 )
 
 func main() {
-	// connect to rabbitmq
+	// initialize kafka consumer
+	//kafkaConsumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+	//	"bootstrap.servers": "localhost:9092",
+	//	"group.id":          "log-service.consumer",
+	//	"auto.offset.reset": "earliest",
+	//})
+	//
+	//if err != nil {
+	//	fmt.Printf("Failed to create consumer: %s\n", err)
+	//	os.Exit(1)
+	//} else {
+	//	fmt.Printf("consumer created...:LISTENER \n")
+	//}
+	//defer kafkaConsumer.Close()
+
+	// initialize kafka consumer admin client
+	//adminClientConsumer, err := kafka.NewAdminClientFromConsumer(kafkaConsumer)
+	//if err != nil {
+	//	fmt.Printf("Failed to create consumer admin client: %s\n", err)
+	//	os.Exit(1)
+	//}
+	//defer adminClientConsumer.Close()
+	//
+	//// Subscribe to the topic = new-user-signup
+	//err = kafkaConsumer.SubscribeTopics([]string{"new-log"}, nil)
+	//if err != nil {
+	//	fmt.Printf("Failed to subscribe to topics: %s\n", err)
+	//	os.Exit(1)
+	//} else {
+	//	fmt.Printf("subscribed to producer topics:LISTENER \n")
+	//}
+
+	// get the list of all topics
+	//topicMetadata, err := adminClientConsumer.GetMetadata(nil, true, 10000)
+	//if err != nil {
+	//	fmt.Printf("failed to get topic metadata: %s\n", err)
+	//	os.Exit(1)
+	//}
+	//fmt.Printf("all topics in the cluster: \n")
+	//for _, topic := range topicMetadata.Topics {
+	//	fmt.Println(topic)
+	//}
+	//
+	//go handlers.ConsumeMessages(kafkaConsumer)
+	//
+	//signChan := make(chan os.Signal, 1)
+	//signal.Notify(signChan, syscall.SIGINT, syscall.SIGTERM)
+	//<-signChan
+	//
+	//fmt.Println("shutdown down gracefully")
+
+	//// connect to rabbitmq
 	rabbitConn, err := connect()
 	if err != nil {
 		log.Println(err)

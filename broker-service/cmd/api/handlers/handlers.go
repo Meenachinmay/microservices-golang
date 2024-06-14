@@ -36,6 +36,7 @@ type LogPayload struct {
 
 type LocalApiConfig struct {
 	*config.Config
+	//Producer *kafka.Producer
 }
 
 func (lac *LocalApiConfig) Broker(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +63,7 @@ func (lac *LocalApiConfig) HandleSubmission(w http.ResponseWriter, r *http.Reque
 	case "log":
 		//logItem(w, requestPayload.Log)
 		lac.logEventViaRabbit(w, requestPayload.Log)
+		//lac.logEventUsingKafka(w, requestPayload.Log, "new-log")
 	case "mail":
 		sendMail(w, requestPayload.Mail)
 	default:
@@ -212,6 +214,33 @@ func (lac *LocalApiConfig) logEventViaRabbit(w http.ResponseWriter, l LogPayload
 	helpers.WriteJSON(w, http.StatusAccepted, payload)
 }
 
+//func (lac *LocalApiConfig) logEventUsingKafka(w http.ResponseWriter, logPayload LogPayload, topic string) {
+//	message, err := json.Marshal(logPayload)
+//	if err != nil {
+//		helpers.ErrorJSON(w, err)
+//	}
+//
+//	err = lac.Producer.Produce(&kafka.Message{
+//		TopicPartition: kafka.TopicPartition{
+//			Topic: &topic, Partition: kafka.PartitionAny,
+//		},
+//		Value: message,
+//	}, nil)
+//	if err != nil {
+//		log.Fatalln("failed to produce log message:", err)
+//		helpers.ErrorJSON(w, err)
+//	}
+//
+//	var payload helpers.JsonResponse
+//	payload.Error = false
+//	payload.Message = "logged via kafka"
+//
+//	helpers.WriteJSON(w, http.StatusAccepted, payload)
+//}
+
+// func (lac *LocalApiConfig) produceLogToKafka(producer *kafka.Producer, topic string, message []byte) {
+//
+// }
 func (lac *LocalApiConfig) pushToQueue(name, msg string) error {
 	emitter, err := actions.NewEventEmitter(lac.Rabbit)
 	if err != nil {

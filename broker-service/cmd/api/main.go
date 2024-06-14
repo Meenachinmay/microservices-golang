@@ -18,6 +18,38 @@ import (
 const webPort = "80"
 
 func main() {
+	// initialize kafka here = producer
+	//producer, err := kafka.NewProducer(&kafka.ConfigMap{
+	//	"bootstrap.servers": "localhost:9092",
+	//})
+	//
+	//if err != nil {
+	//	log.Fatalf("Error creating producer: %s", err)
+	//} else {
+	//	log.Println("Producer created...:BROKER_SERVICE")
+	//}
+	//defer producer.Close()
+
+	// initialize the kafka admin client
+	//adminClient, err := kafka.NewAdminClientFromProducer(producer)
+	//if err != nil {
+	//	log.Fatalf("failed to create admin client from producer: %s", err)
+	//} else {
+	//	log.Println("Kafka Admin client created...:BROKER_SERVICE")
+	//}
+	//defer adminClient.Close()
+
+	//create the topic if it doesn't exist
+	//topic := "new-log"
+	//err = utils.CreateKafkaTopic(adminClient, topic)
+	//if err != nil {
+	//	log.Fatalf("failed to create kafka topic: %s", err)
+	//} else {
+	//	fmt.Printf("Kafka topic %s created...:BROKER_SERVICE\n", topic)
+	//}
+
+	//--------------------------------------------------above this line there is a kafka setup--------------------------------------
+
 	// connect to rabbitmq
 	rabbitConn, err := connect()
 	if err != nil {
@@ -29,9 +61,11 @@ func main() {
 	// setting configuration for global use
 	apiConfig := &config.Config{
 		Rabbit: rabbitConn,
+		//Producer: producer,
 	}
 	localApiConfig := &handlers.LocalApiConfig{
 		Config: apiConfig,
+		//Producer: producer,
 	}
 
 	// initialize the gin router
