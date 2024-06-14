@@ -28,7 +28,7 @@ down:
 ## build_broker: builds the broker binary as a linux executable
 build_broker:
 	@echo "Building broker binary..."
-	cd ../broker-service && go build -o ${BROKER_BINARY} ./cmd/api
+	cd ../broker-service && go build -tags dynamic -o ${BROKER_BINARY} ./cmd/api
 	@echo "Done!"
 
 ## build_logger: builds the broker binary as a linux executable

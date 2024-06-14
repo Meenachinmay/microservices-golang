@@ -47,8 +47,6 @@ services:
       deploy:
         mode: replicated
         replicas: 1
-      depends_on:
-        - broker-service
 
     mailer-service:
       build:

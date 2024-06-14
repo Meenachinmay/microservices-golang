@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"listener-service/actions"
+	"listener-service/actions/consumers"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -71,44 +72,49 @@ func main() {
 	defer rabbitConn.Close()
 
 	log.Println("listening for and consuming messages")
-	consumer, err := actions.NewConsumer(rabbitConn)
-	if err != nil {
-		log.Panic(err)
-	}
 
-	err = consumer.ConsumeLogs([]string{"log.INFO", "log.WARNING", "log.ERROR"})
-	if err != nil {
-		log.Panic(err)
-	}
+	// start consumers for services
+	go startLogConsumer(rabbitConn)
+
+	select {}
 }
 
 func connect() (*amqp.Connection, error) {
 	var counts int64
 	var backOffTime = 1 * time.Second
-
-	var connection *amqp.Connection
+	maxBackOffTime := 30 * time.Second
+	rand.Seed(time.Now().UnixNano())
 
 	for {
-		c, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+		conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
 		if err != nil {
-			fmt.Println("RabbitMQ not yet ready...")
+			log.Printf("RabbitMQ not yet ready... (%v)", err)
 			counts++
 		} else {
-			connection = c
-			break
+			log.Println("Connected to RabbitMQ")
+			return conn, nil
 		}
 
 		if counts > 5 {
-			fmt.Println(err)
-			return nil, err
+			return nil, fmt.Errorf("failed to connect to RabbitMQ after multiple attempts: %v", err)
 		}
 
-		backOffTime = time.Duration(math.Pow(float64(counts), 2)) * time.Second
-		log.Println("backing off...")
-		time.Sleep(backOffTime)
-		continue
+		jitter := time.Duration(rand.Int63n(int64(backOffTime)))
+		backOffTime = time.Duration(math.Min(float64(maxBackOffTime), float64(backOffTime*2)))
+		log.Printf("Backing off for %v seconds (with jitter)...", backOffTime+jitter)
+		time.Sleep(backOffTime + jitter)
 	}
-
-	log.Println("Connected to RabbitMQ...")
-	return connection, nil
 }
+
+func startLogConsumer(conn *amqp.Connection) {
+	consumer, err := consumers.NewLogConsumer(conn)
+	if err != nil {
+		log.Fatalf("Failed to create log consumer:START_LOG_CONSUMER %v", err)
+	}
+	err = consumer.ConsumeLogs([]string{"log.INFO", "log.WARNING", "log.ERROR"})
+	if err != nil {
+		log.Fatalf("Failed to consume logs: %v", err)
+	}
+}
+
+//"amqp://guest:guest@rabbitmq:5672/"

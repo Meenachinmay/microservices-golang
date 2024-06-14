@@ -202,9 +202,17 @@ func authenticate(w http.ResponseWriter, a AuthPayload) {
 }
 
 func (lac *LocalApiConfig) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
-	err := lac.pushToQueue(l.Name, l.Data)
+	emitter, err := actions.NewEmitter(lac.Rabbit, "log_topics", "log.INFO")
 	if err != nil {
 		helpers.ErrorJSON(w, err)
+		return
+	}
+
+	j, _ := json.Marshal(&l)
+	err = emitter.Emit(string(j))
+	if err != nil {
+		helpers.ErrorJSON(w, err)
+		return
 	}
 
 	var payload helpers.JsonResponse
@@ -241,21 +249,22 @@ func (lac *LocalApiConfig) logEventViaRabbit(w http.ResponseWriter, l LogPayload
 // func (lac *LocalApiConfig) produceLogToKafka(producer *kafka.Producer, topic string, message []byte) {
 //
 // }
-func (lac *LocalApiConfig) pushToQueue(name, msg string) error {
-	emitter, err := actions.NewEventEmitter(lac.Rabbit)
-	if err != nil {
-		return err
-	}
 
-	payload := LogPayload{
-		Name: name,
-		Data: msg,
-	}
-
-	j, _ := json.Marshal(&payload)
-	err = emitter.Emit(string(j), "log.INFO")
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//func (lac *LocalApiConfig) pushToQueue(name, msg string) error {
+//	emitter, err := actions.NewEventEmitter(lac.Rabbit)
+//	if err != nil {
+//		return err
+//	}
+//
+//	payload := LogPayload{
+//		Name: name,
+//		Data: msg,
+//	}
+//
+//	j, _ := json.Marshal(&payload)
+//	err = emitter.Emit(string(j), "log.INFO")
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
