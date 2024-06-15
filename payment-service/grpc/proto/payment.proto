@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "/payment";
+
+message Payment {
+ string card_number = 1;
+ string card_holder_name = 2;
+ string card_cvv = 3;
+ string card_expiry = 4;
+ double amount = 5;
+ string currency = 6;
+}
+
+message PaymentRequest {
+  Payment newPayment = 1;
+}
+
+message PaymentResponse {
+  string result = 1;
+}
+
+service PaymentService {
+  rpc ProcessPayment(PaymentRequest) returns (PaymentResponse);
+}

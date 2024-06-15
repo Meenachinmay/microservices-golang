@@ -48,6 +48,17 @@ services:
         mode: replicated
         replicas: 1
 
+    payment-service:
+      build:
+        context: ./../payment-service
+        dockerfile: ./../payment-service/payment-service.dockerfile
+      restart: always
+      ports:
+        - "8085:80"
+      deploy:
+        mode: replicated
+        replicas: 1
+
     mailer-service:
       build:
         context: ./../mail-service

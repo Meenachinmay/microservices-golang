@@ -108,6 +108,11 @@ The Listener Service listens for events from RabbitMQ and processes them. It han
 - **MongoDB**: The database used by the Logger Service.
 - **gRPC: Communication between api-gateway and services.
 
+### Command to generate gRPC code 
+``` sh 
+     protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative <name of file>.proto
+```
+
 ## Contributing
 
 Contributions are welcome! Please read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for more information on how to contribute to this project.
