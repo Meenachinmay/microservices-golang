@@ -82,11 +82,15 @@ func main() {
 	router.POST("/", localApiConfig.Broker)
 	router.POST("/handle", localApiConfig.HandleSubmission)
 
-	log.Printf("Starting broker service on port %s\n", webPort)
+	// routes for calling grpc services
+	router.POST("/log-grpc", localApiConfig.LogViaGRPC)
+
 	// start the server
+	log.Printf("Starting broker service on port %s\n", webPort)
 	log.Fatal(router.Run(":" + webPort))
 }
 
+// connect to rabbitmq api-gateway
 func connect() (*amqp.Connection, error) {
 	var counts int64
 	var backOffTime = 1 * time.Second
