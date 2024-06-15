@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -39,40 +40,40 @@ type LocalApiConfig struct {
 	//Producer *kafka.Producer
 }
 
-func (lac *LocalApiConfig) Broker(w http.ResponseWriter, r *http.Request) {
+func (lac *LocalApiConfig) Broker(c *gin.Context) {
 	payload := helpers.JsonResponse{
 		Error:   false,
 		Message: "Hit the broker",
 	}
 
-	_ = helpers.WriteJSON(w, http.StatusOK, payload)
+	_ = helpers.WriteJSON(c, http.StatusOK, payload)
 }
 
-func (lac *LocalApiConfig) HandleSubmission(w http.ResponseWriter, r *http.Request) {
+func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 	var requestPayload RequestPayload
 
-	err := helpers.ReadJSON(w, r, &requestPayload)
+	err := helpers.ReadJSON(c, &requestPayload)
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
 	switch requestPayload.Action { // handling different actions from here
 	case "auth":
-		authenticate(w, requestPayload.Auth)
+		authenticate(c, requestPayload.Auth)
 	case "log":
 		//logItem(w, requestPayload.Log)
-		lac.logEventViaRabbit(w, requestPayload.Log)
+		lac.logEventViaRabbit(c, requestPayload.Log)
 		//lac.logEventUsingKafka(w, requestPayload.Log, "new-log")
 	case "mail":
-		sendMail(w, requestPayload.Mail)
+		sendMail(c, requestPayload.Mail)
 	default:
-		helpers.ErrorJSON(w, errors.New("invalid action"))
+		helpers.ErrorJSON(c, errors.New("invalid action"))
 	}
 }
 
 // send mail
-func sendMail(w http.ResponseWriter, mail MailPayload) {
+func sendMail(c *gin.Context, mail MailPayload) {
 	jsonData, _ := json.MarshalIndent(mail, "", "\t")
 
 	// call the mail service
@@ -81,7 +82,7 @@ func sendMail(w http.ResponseWriter, mail MailPayload) {
 	// post to mail service
 	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -91,14 +92,14 @@ func sendMail(w http.ResponseWriter, mail MailPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 	defer response.Body.Close()
 
 	// deal with response
 	if response.StatusCode != http.StatusAccepted {
-		helpers.ErrorJSON(w, errors.New("error calling mail service"))
+		helpers.ErrorJSON(c, errors.New("error calling mail service"))
 		return
 	}
 
@@ -107,18 +108,18 @@ func sendMail(w http.ResponseWriter, mail MailPayload) {
 	payload.Error = false
 	payload.Message = "message sent to " + mail.To
 
-	helpers.WriteJSON(w, http.StatusAccepted, payload)
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
 // log item in log service
-func logItem(w http.ResponseWriter, log LogPayload) {
+func logItem(c *gin.Context, log LogPayload) {
 	jsonData, _ := json.MarshalIndent(log, "", "\t")
 
 	logServiceURL := "http://logger-service/log"
 
 	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -127,7 +128,7 @@ func logItem(w http.ResponseWriter, log LogPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -135,7 +136,7 @@ func logItem(w http.ResponseWriter, log LogPayload) {
 
 	// response
 	if response.StatusCode != http.StatusAccepted {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -143,19 +144,19 @@ func logItem(w http.ResponseWriter, log LogPayload) {
 	payload.Error = false
 	payload.Message = "logged"
 
-	helpers.WriteJSON(w, http.StatusAccepted, payload)
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
 
 }
 
 // authenticate service
-func authenticate(w http.ResponseWriter, a AuthPayload) {
+func authenticate(c *gin.Context, a AuthPayload) {
 	// create some json to send to the auth service
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
 
 	// call the service
 	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -164,17 +165,17 @@ func authenticate(w http.ResponseWriter, a AuthPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 	defer response.Body.Close()
 
 	// make sure we get back status code
 	if response.StatusCode == http.StatusUnauthorized {
-		helpers.ErrorJSON(w, errors.New("unauthorized"))
+		helpers.ErrorJSON(c, errors.New("unauthorized"))
 		return
 	} else if response.StatusCode != http.StatusAccepted {
-		helpers.ErrorJSON(w, errors.New("error calling auth service"))
+		helpers.ErrorJSON(c, errors.New("error calling auth service"))
 		return
 	}
 
@@ -184,12 +185,12 @@ func authenticate(w http.ResponseWriter, a AuthPayload) {
 	// decode the json from the auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
 	if jsonFromService.Error {
-		helpers.ErrorJSON(w, err, http.StatusUnauthorized)
+		helpers.ErrorJSON(c, err, http.StatusUnauthorized)
 		return
 	}
 
@@ -198,20 +199,20 @@ func authenticate(w http.ResponseWriter, a AuthPayload) {
 	payload.Message = "authentication successful"
 	payload.Data = jsonFromService.Data
 
-	helpers.WriteJSON(w, http.StatusAccepted, payload)
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
-func (lac *LocalApiConfig) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
+func (lac *LocalApiConfig) logEventViaRabbit(c *gin.Context, l LogPayload) {
 	emitter, err := actions.NewEmitter(lac.Rabbit, "log_topics", "log.INFO")
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
 	j, _ := json.Marshal(&l)
 	err = emitter.Emit(string(j))
 	if err != nil {
-		helpers.ErrorJSON(w, err)
+		helpers.ErrorJSON(c, err)
 		return
 	}
 
@@ -219,7 +220,7 @@ func (lac *LocalApiConfig) logEventViaRabbit(w http.ResponseWriter, l LogPayload
 	payload.Error = false
 	payload.Message = "logged via rabbit"
 
-	helpers.WriteJSON(w, http.StatusAccepted, payload)
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
 //func (lac *LocalApiConfig) logEventUsingKafka(w http.ResponseWriter, logPayload LogPayload, topic string) {

@@ -4,13 +4,11 @@ import (
 	"broker/cmd/api/handlers"
 	"broker/internal/config"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"time"
 )
@@ -69,34 +67,24 @@ func main() {
 	}
 
 	// initialize the gin router
-	mux := chi.NewRouter()
+	router := gin.Default()
 
-	// setting cors
-	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost", "https://*", "http://*"}, // Specify the exact origin of your Next.js app
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"},
+	// Configure CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost", "https://*", "http://*"}, // Specify the exact origin of your Next.js app
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true, // Important: Must be true when credentials are included
-		MaxAge:           300,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	// routes
-	mux.Use(middleware.Heartbeat("/ping"))
-	mux.Post("/", localApiConfig.Broker)
-	mux.Post("/handle", localApiConfig.HandleSubmission)
-
-	// define http server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: mux,
-	}
+	router.POST("/", localApiConfig.Broker)
+	router.POST("/handle", localApiConfig.HandleSubmission)
 
 	log.Printf("Starting broker service on port %s\n", webPort)
 	// start the server
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
-	}
+	log.Fatal(router.Run(":" + webPort))
 }
 
 func connect() (*amqp.Connection, error) {
