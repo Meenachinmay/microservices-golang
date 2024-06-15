@@ -66,7 +66,8 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.logEventViaRabbit(c, requestPayload.Log)
 		//lac.logEventUsingKafka(w, requestPayload.Log, "new-log")
 	case "mail":
-		sendMail(c, requestPayload.Mail)
+		//sendMail(c, requestPayload.Mail)
+		lac.sendMailViaRabbit(c, requestPayload.Mail)
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
 	}
@@ -219,6 +220,27 @@ func (lac *LocalApiConfig) logEventViaRabbit(c *gin.Context, l LogPayload) {
 	var payload helpers.JsonResponse
 	payload.Error = false
 	payload.Message = "logged via rabbit"
+
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
+}
+
+func (lac *LocalApiConfig) sendMailViaRabbit(c *gin.Context, mail MailPayload) {
+	emitter, err := actions.NewEmitter(lac.Rabbit, "mail_exchange", "mail_key")
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	j, _ := json.Marshal(&mail)
+	err = emitter.Emit(string(j))
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	var payload helpers.JsonResponse
+	payload.Error = false
+	payload.Message = "sent mail via rabbit"
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }

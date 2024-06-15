@@ -27,7 +27,7 @@ func DeclareRandomQueue(ch *amqp.Channel) (amqp.Queue, error) {
 	)
 }
 
-func declareMailExchange(ch *amqp.Channel) error {
+func DeclareMailExchange(ch *amqp.Channel) error {
 	return ch.ExchangeDeclare(
 		"mail_exchange", // name of exchange
 		"direct",        // type
@@ -39,7 +39,7 @@ func declareMailExchange(ch *amqp.Channel) error {
 	)
 }
 
-func declareMailQueue(ch *amqp.Channel) (amqp.Queue, error) {
+func DeclareMailQueue(ch *amqp.Channel) (amqp.Queue, error) {
 	return ch.QueueDeclare(
 		"mail_queue", // Name of the queue
 		false,        // Durable

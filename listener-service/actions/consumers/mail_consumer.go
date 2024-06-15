@@ -35,7 +35,7 @@ func (consumer *MailConsumer) setup() error {
 	}
 	defer ch.Close()
 
-	return declareMailExchange(ch)
+	return DeclareMailExchange(ch)
 }
 
 func (consumer *MailConsumer) ConsumeMails() error {
@@ -45,7 +45,7 @@ func (consumer *MailConsumer) ConsumeMails() error {
 	}
 	defer ch.Close()
 
-	queue, err := declareMailQueue(ch)
+	queue, err := DeclareMailQueue(ch)
 	if err != nil {
 		return fmt.Errorf("failed to declare a queue: %v", err)
 	}
@@ -102,6 +102,6 @@ func sendMail(payload MailPayload) error {
 	if response.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("unexpected response status:SENDMAIL: %d", response.StatusCode)
 	}
-
+	log.Println("sent mail via rabbit:LISTENER_SERVICE-MailConsumer")
 	return nil
 }
