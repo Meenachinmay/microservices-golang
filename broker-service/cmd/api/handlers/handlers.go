@@ -2,13 +2,19 @@ package handlers
 
 import (
 	"broker/actions"
+	"broker/gRPC-client/logs"
+	_ "broker/gRPC-client/logs"
 	"broker/helpers"
 	"broker/internal/config"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
+	"time"
 )
 
 type RequestPayload struct {
@@ -291,3 +297,42 @@ func (lac *LocalApiConfig) sendMailViaRabbit(c *gin.Context, mail MailPayload) {
 //	}
 //	return nil
 //}
+
+func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
+	var requestPayload RequestPayload
+
+	err := helpers.ReadJSON(c, &requestPayload)
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	conn, err := grpc.NewClient("logger-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+	defer conn.Close()
+
+	cc := logs.NewLogServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = cc.WriteLog(ctx, &logs.LogRequest{
+		LogEntry: &logs.Log{
+			Name: requestPayload.Log.Name,
+			Data: requestPayload.Log.Data,
+		},
+	})
+
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	var payload helpers.JsonResponse
+	payload.Error = false
+	payload.Message = "logged via grpc"
+
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
+}

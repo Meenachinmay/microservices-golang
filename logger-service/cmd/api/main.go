@@ -48,30 +48,20 @@ func main() {
 	}
 
 	// start web server
-	//go app.serve()
 	log.Println("Starting log service server...")
+
+	go app.gRPCListener()
+
 	srv := &http.Server{
 		Addr:    ":" + webPort,
 		Handler: app.routes(),
 	}
-
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
 	}
-}
 
-//func (app *Config) serve() {
-//	srv := &http.Server{
-//		Addr:    fmt.Sprintf(":%s", webPort),
-//		Handler: app.routes(),
-//	}
-//
-//	err := srv.ListenAndServe()
-//	if err != nil {
-//		log.Panic(err)
-//	}
-//}
+}
 
 func connectToDB() (*mongo.Client, error) {
 	// create connection options
