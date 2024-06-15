@@ -75,6 +75,7 @@ func main() {
 
 	// start consumers for services
 	go startLogConsumer(rabbitConn)
+	go startMailConsumer(rabbitConn)
 
 	select {}
 }
@@ -114,6 +115,17 @@ func startLogConsumer(conn *amqp.Connection) {
 	err = consumer.ConsumeLogs([]string{"log.INFO", "log.WARNING", "log.ERROR"})
 	if err != nil {
 		log.Fatalf("Failed to consume logs: %v", err)
+	}
+}
+
+func startMailConsumer(conn *amqp.Connection) {
+	consumer, err := consumers.NewMailConsumer(conn)
+	if err != nil {
+		log.Fatalf("Failed to create mail consumer:START_MAIL_CONSUMER %v", err)
+	}
+	err = consumer.ConsumeMails()
+	if err != nil {
+		log.Fatalf("Failed to send mail:LISTENER %v", err)
 	}
 }
 
