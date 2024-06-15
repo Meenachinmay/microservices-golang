@@ -106,6 +106,7 @@ The Listener Service listens for events from RabbitMQ and processes them. It han
 - **RabbitMQ**: Used for messaging between services.
 - **PostgreSQL**: The database used by the Authentication Service.
 - **MongoDB**: The database used by the Logger Service.
+- **gRPC: Communication between api-gateway and services.
 
 ## Contributing
 
