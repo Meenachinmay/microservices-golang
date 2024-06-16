@@ -16,6 +16,7 @@
   - [Logger Service](#logger-service)
   - [Mailer Service](#mailer-service)
   - [Listener Service](#listener-service)
+  - [Payment Service](#payment-service)
 - [Technologies Used](#technologies-used)
 - [Contributing](#contributing)
 - [License](#license)
@@ -33,6 +34,7 @@ The architecture is composed of multiple services that communicate with each oth
 - **Logger Service**: Logs application events.
 - **Mailer Service**: Sends emails.
 - **Listener Service**: Listens for events from RabbitMQ and processes them.
+- **Payment Service**: Listens for gRPC calls from api-gateway to Process payments using credit card.
 
 
 ## Getting Started
@@ -75,6 +77,7 @@ Before you begin, ensure you have the following installed:
     - Logger Service: `http://localhost:8082`
     - Mailer Service: `http://localhost:8083`
     - Listener Service: `http://localhost:8084`
+    - Payment Service: `http://localhost:8085`
 
 ## Services
 
@@ -98,6 +101,13 @@ The Mailer Service sends emails. It listens for mail events from RabbitMQ and se
 
 The Listener Service listens for events from RabbitMQ and processes them. It handles log and mail events, delegating tasks to the appropriate services.
 
+### Payment Service
+The payment service uses stripe payment gateway API to enable credit card payment for now. Payment service
+need to communicate with async calls with api-gateway and api-gateway with client, so for the communication
+between api-gateway and Payment service I am enabling gRPC calls, rather than using RabbitMQ. 
+In this service I planned to use rabbitMQ to generate email invoices for payments on a completion of 
+successful payments from users.
+
 ## Technologies Used
 
 - **Golang**: The primary language used for building the services.
@@ -106,7 +116,8 @@ The Listener Service listens for events from RabbitMQ and processes them. It han
 - **RabbitMQ**: Used for messaging between services.
 - **PostgreSQL**: The database used by the Authentication Service.
 - **MongoDB**: The database used by the Logger Service.
-- **gRPC: Communication between api-gateway and services.
+- **gRPC**: Communication method between api-gateway and other services where it needs async calls.
+
 
 ### Command to generate gRPC code 
 ``` sh 
