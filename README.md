@@ -118,6 +118,7 @@ successful payments from users.
 - **MongoDB**: The database used by the Logger Service.
 - **gRPC**: Communication method between api-gateway and other services where it needs async calls.
 
+
 ### Command to generate gRPC code 
 ``` sh 
      protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative <name of file>.proto
