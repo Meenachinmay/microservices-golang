@@ -110,6 +110,17 @@ services:
       volumes:
         - ./db-data/mongo/:/data/db
 
+    redis:
+      image: 'redis:6.2-alpine'
+      ports:
+        - "6379:6379"
+      deploy:
+        mode: replicated
+        replicas: 1
+      volumes:
+        - ./db-data/redis/:/data/db
+      command: ["redis-server", "--appendonly", "yes"]
+
     mailhog:
       image: 'mailhog/mailhog:latest'
       ports:
