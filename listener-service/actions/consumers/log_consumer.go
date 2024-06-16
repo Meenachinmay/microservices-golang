@@ -7,6 +7,9 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type LogConsumer struct {
@@ -59,7 +62,6 @@ func (consumer *LogConsumer) ConsumeLogs(topics []string) error {
 		return fmt.Errorf("failed to register a consumer: %v", err)
 	}
 
-	forever := make(chan bool)
 	go func() {
 		for d := range messages {
 			var payload LogPayload
@@ -72,7 +74,13 @@ func (consumer *LogConsumer) ConsumeLogs(topics []string) error {
 	}()
 
 	log.Printf("Waiting for log messages [Exchange, Queue] [log_topics, %s]\n", queue.Name)
-	<-forever
+
+	// handle termination signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	<-sigs
+	log.Printf("Received shutdown signal, exiting...\n")
+
 	return nil
 }
 

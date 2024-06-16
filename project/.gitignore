@@ -1,2 +1,5 @@
 db-data
 ./db-data/*
+
+.env
+db-data
