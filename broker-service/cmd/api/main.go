@@ -3,12 +3,15 @@ package main
 import (
 	"broker/cmd/api/handlers"
 	"broker/internal/config"
+	"broker/middlewares"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"time"
 )
@@ -48,6 +51,13 @@ func main() {
 
 	//--------------------------------------------------above this line there is a kafka setup--------------------------------------
 
+	// Initialize the REDIS here
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		Password: "",
+		DB:       0,
+	})
+
 	// connect to rabbitmq
 	rabbitConn, err := connect()
 	if err != nil {
@@ -58,7 +68,8 @@ func main() {
 
 	// setting configuration for global use
 	apiConfig := &config.Config{
-		Rabbit: rabbitConn,
+		Rabbit:      rabbitConn,
+		RedisClient: redisClient,
 		//Producer: producer,
 	}
 	localApiConfig := &handlers.LocalApiConfig{
@@ -78,7 +89,13 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// apply rate limiting middleware here
+	router.Use(middlewares.RateLimitMiddleware(redisClient, 2, time.Minute))
+
 	// routes
+	router.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
 	router.POST("/", localApiConfig.Broker)
 	router.POST("/handle", localApiConfig.HandleSubmission)
 
