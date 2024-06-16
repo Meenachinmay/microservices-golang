@@ -82,7 +82,7 @@ services:
         - broker-service
 
     postgres:
-      image: 'postgres:14.0'
+      image: 'postgres:16.3'
       ports:
         - "5432:5432"
       restart: always
