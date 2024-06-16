@@ -3,14 +3,12 @@ package main
 import (
 	"authentication/data"
 	"database/sql"
+	"errors"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	_ "github.com/jackc/pgconn"
-	_ "github.com/jackc/pgx/v4"
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 const webPort = "80"
@@ -48,8 +46,13 @@ func main() {
 	}
 }
 
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
+func openDB() (*sql.DB, error) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		return nil, errors.New("missing DATABASE_URL")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return nil, err
 	}
@@ -63,10 +66,8 @@ func openDB(dsn string) (*sql.DB, error) {
 }
 
 func connectToDB() *sql.DB {
-	dsn := os.Getenv("DSN")
-
 	for {
-		connection, err := openDB(dsn)
+		connection, err := openDB()
 		if err != nil {
 			log.Println("Could not connect to database, Postgres is not ready...")
 			counts += 1

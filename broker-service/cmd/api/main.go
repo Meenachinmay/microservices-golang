@@ -90,7 +90,7 @@ func main() {
 	}))
 
 	// apply rate limiting middleware here
-	router.Use(middlewares.RateLimitMiddleware(redisClient, 2, time.Minute))
+	router.Use(middlewares.RateLimitMiddleware(redisClient, 50, time.Minute))
 
 	// routes
 	router.GET("/ping", func(c *gin.Context) {
