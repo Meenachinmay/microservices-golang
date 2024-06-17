@@ -49,3 +49,14 @@ func DeclareMailQueue(ch *amqp.Channel) (amqp.Queue, error) {
 		nil,          // Arguments
 	)
 }
+
+func DeclareEnquiryMailQueue(ch *amqp.Channel) (amqp.Queue, error) {
+	return ch.QueueDeclare(
+		"enquiry_mail_queue", // Name of the queue
+		false,                // Durable
+		false,                // Delete when unused
+		false,                // Exclusive
+		false,                // No-wait
+		nil,                  // Arguments
+	)
+}
