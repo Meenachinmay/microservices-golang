@@ -69,7 +69,7 @@ func (consumer *MailConsumer) ConsumeMails() error {
 				log.Printf("Failed to unmarshal message: %v", err)
 				continue
 			}
-			sendMail(payload)
+			_ = sendMail(payload)
 		}
 	}()
 
@@ -82,6 +82,90 @@ func (consumer *MailConsumer) ConsumeMails() error {
 	log.Printf("Received shutdown signal, exiting...\n")
 
 	return nil
+}
+
+func (consumer *MailConsumer) ConsumeEnquiryMails() error {
+	ch, err := consumer.conn.Channel()
+	if err != nil {
+		return fmt.Errorf("failed to open a channel: %v", err)
+	}
+	defer ch.Close()
+
+	queue, err := DeclareEnquiryMailQueue(ch)
+	if err != nil {
+		return fmt.Errorf("failed to delcare a queue: %v", err)
+	}
+
+	if err := ch.QueueBind(queue.Name, "enquiry_mail", "mail_exchange", false, nil); err != nil {
+		return fmt.Errorf("failed to bind a queue: %v", err)
+	}
+
+	messages, err := ch.Consume(queue.Name, "", false, false, false, false, nil)
+	if err != nil {
+		return fmt.Errorf("failed to start consuming message from queue: %v", err)
+	}
+
+	go func() {
+		for d := range messages {
+			var payload MailPayload
+			if err := json.Unmarshal(d.Body, &payload); err != nil {
+				log.Printf("Failed to unmarshal message from queue: %v", err)
+				d.Nack(false, false)
+				continue
+			}
+
+			if err := sendEnquiryMail(payload); err != nil {
+				log.Printf("Failed to send enquiry mail: %v", err)
+				d.Nack(false, true)
+				continue
+			}
+
+			d.Ack(false)
+		}
+	}()
+
+	log.Printf("Waiting for mail messages [Exchange, Queue] [enquiry_mail, %s]\n", queue.Name)
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	<-sigs
+	log.Printf("Received shutdown signal, exiting...\n")
+
+	return nil
+}
+
+func sendEnquiryMail(payload MailPayload) error {
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload:[sendEnquiryMail] %v", err)
+	}
+
+	mailServiceURL := "http://mailer-service/send"
+
+	// request to mail service
+	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create a HTTP request:[http://mailer-service/send] %v", err)
+	}
+
+	// set header
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("failed to receive a response from the request:[http://mailer-service/send] %v", err)
+	}
+	defer response.Body.Close()
+
+	// handle response
+	if response.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("unsuccessful response from the request:[http://mailer-service/send] %v", response.Status)
+	}
+
+	log.Println("Successfully sent enquiry mail to user.")
+	return nil
+
 }
 
 func sendMail(payload MailPayload) error {
