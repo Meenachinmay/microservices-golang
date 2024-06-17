@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,10 +20,11 @@ import (
 )
 
 type RequestPayload struct {
-	Action string      `json:"action"`
-	Auth   AuthPayload `json:"auth,omitempty"`
-	Log    LogPayload  `json:"log,omitempty"`
-	Mail   MailPayload `json:"mail,omitempty"`
+	Action         string         `json:"action"`
+	Auth           AuthPayload    `json:"auth,omitempty"`
+	Log            LogPayload     `json:"log,omitempty"`
+	Mail           MailPayload    `json:"mail,omitempty"`
+	EnquiryPayload EnquiryPayload `json:"enquiry,omitempty"`
 }
 
 type MailPayload struct {
@@ -30,6 +32,19 @@ type MailPayload struct {
 	To      string `json:"to"`
 	Subject string `json:"subject"`
 	Message string `json:"message"`
+}
+
+type EnquiryMailPayload struct {
+	From      string    `json:"from"`
+	To        string    `json:"to"`
+	Subject   string    `json:"subject"`
+	Message   string    `json:"message"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type EnquiryPayload struct {
+	UserID     string `json:"user_id"`
+	PropertyID string `json:"property_id"`
 }
 
 type AuthPayload struct {
@@ -80,10 +95,12 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 	case "log":
 		//logItem(w, requestPayload.Log)
 		lac.logEventViaRabbit(c, requestPayload.Log)
-		//lac.logEventUsingKafka(w, requestPayload.Log, "new-log")
 	case "mail":
 		//sendMail(c, requestPayload.Mail)
 		lac.sendMailViaRabbit(c, requestPayload.Mail)
+	case "enquiry_mail":
+		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload)
+
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
 	}
@@ -261,53 +278,6 @@ func (lac *LocalApiConfig) sendMailViaRabbit(c *gin.Context, mail MailPayload) {
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
-//func (lac *LocalApiConfig) logEventUsingKafka(w http.ResponseWriter, logPayload LogPayload, topic string) {
-//	message, err := json.Marshal(logPayload)
-//	if err != nil {
-//		helpers.ErrorJSON(w, err)
-//	}
-//
-//	err = lac.Producer.Produce(&kafka.Message{
-//		TopicPartition: kafka.TopicPartition{
-//			Topic: &topic, Partition: kafka.PartitionAny,
-//		},
-//		Value: message,
-//	}, nil)
-//	if err != nil {
-//		log.Fatalln("failed to produce log message:", err)
-//		helpers.ErrorJSON(w, err)
-//	}
-//
-//	var payload helpers.JsonResponse
-//	payload.Error = false
-//	payload.Message = "logged via kafka"
-//
-//	helpers.WriteJSON(w, http.StatusAccepted, payload)
-//}
-
-// func (lac *LocalApiConfig) produceLogToKafka(producer *kafka.Producer, topic string, message []byte) {
-//
-// }
-
-//func (lac *LocalApiConfig) pushToQueue(name, msg string) error {
-//	emitter, err := actions.NewEventEmitter(lac.Rabbit)
-//	if err != nil {
-//		return err
-//	}
-//
-//	payload := LogPayload{
-//		Name: name,
-//		Data: msg,
-//	}
-//
-//	j, _ := json.Marshal(&payload)
-//	err = emitter.Emit(string(j), "log.INFO")
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
 func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
 	var requestPayload RequestPayload
 
@@ -389,4 +359,34 @@ func (lac *LocalApiConfig) PaymentViaGRPC(c *gin.Context) {
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 
+}
+
+func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail EnquiryPayload) {
+	emitter, err := actions.NewEmitter(lac.Rabbit, "mail_exchange", "enquiry_mail")
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	// prepare enquiry email
+	enquiryEmail := EnquiryMailPayload{
+		From:      "chinmayanand896@icloud.com",
+		To:        mail.UserID,
+		Subject:   "Thank you for your enquiry.",
+		Message:   fmt.Sprintf("Thank you for your enquiry about propery %s", mail.PropertyID),
+		Timestamp: time.Now(),
+	}
+
+	j, _ := json.Marshal(&enquiryEmail)
+	err = emitter.Emit(string(j))
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	var payload helpers.JsonResponse
+	payload.Error = false
+	payload.Message = "enquiry mail has been sent via rabbit"
+
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
