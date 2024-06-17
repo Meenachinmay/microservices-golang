@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type MailConsumer struct {
@@ -21,6 +22,14 @@ type MailPayload struct {
 	To      string `json:"to"`
 	Subject string `json:"subject"`
 	Message string `json:"message"`
+}
+
+type EnquiryMailPayload struct {
+	From      string    `json:"from"`
+	To        string    `json:"to"`
+	Subject   string    `json:"subject"`
+	Message   string    `json:"message"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func NewMailConsumer(conn *amqp.Connection) (*MailConsumer, error) {
@@ -107,7 +116,7 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 
 	go func() {
 		for d := range messages {
-			var payload MailPayload
+			var payload EnquiryMailPayload
 			if err := json.Unmarshal(d.Body, &payload); err != nil {
 				log.Printf("Failed to unmarshal message from queue: %v", err)
 				d.Nack(false, false)
@@ -134,7 +143,7 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 	return nil
 }
 
-func sendEnquiryMail(payload MailPayload) error {
+func sendEnquiryMail(payload EnquiryMailPayload) error {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload:[sendEnquiryMail] %v", err)
