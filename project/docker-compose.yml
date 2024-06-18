@@ -69,6 +69,17 @@ services:
         mode: replicated
         replicas: 1
 
+    frontend:
+      build:
+        context: ./../client
+        dockerfile: ./../client/client.dockerfile
+      restart: always
+      ports:
+        - "80:3000"
+      deploy:
+        mode: replicated
+        replicas: 1
+
     mailer-service:
       build:
         context: ./../mail-service
