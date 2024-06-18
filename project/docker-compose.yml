@@ -40,6 +40,12 @@ services:
       deploy:
         mode: replicated
         replicas: 1
+      env_file:
+        - ./.env
+      environment:
+        DATABASE_URL_LOGGER_SERVICE: ${DATABASE_URL_LOGGER_SERVICE}
+      depends_on:
+        - postgres
 
     listener-service:
       build:
