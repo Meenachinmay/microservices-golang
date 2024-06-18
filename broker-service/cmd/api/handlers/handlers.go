@@ -45,6 +45,8 @@ type EnquiryMailPayload struct {
 type EnquiryPayload struct {
 	UserID     string `json:"user_id"`
 	PropertyID string `json:"property_id"`
+	Name       string `json:"name"`
+	Location   string `json:"location"`
 }
 
 type AuthPayload struct {
@@ -373,7 +375,7 @@ func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail Enquiry
 		From:      "chinmayanand896@icloud.com",
 		To:        mail.UserID,
 		Subject:   "Thank you for your enquiry.",
-		Message:   fmt.Sprintf("Thank you for your enquiry about propery %s", mail.PropertyID),
+		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s and Id %s at location %s", mail.Name, mail.PropertyID, mail.Location),
 		Timestamp: time.Now(),
 	}
 
