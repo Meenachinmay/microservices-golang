@@ -123,13 +123,19 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 				continue
 			}
 
-			if err := sendEnquiryMail(payload); err != nil {
+			timeTaken, err := sendEnquiryMail(payload)
+			var test = fmt.Sprintf("email sent successfully but exceeded 90 seconds threshold: %v", timeTaken)
+			if err != nil && err.Error() != test {
 				log.Printf("Failed to send enquiry mail: %v", err)
 				d.Nack(false, true)
 				continue
 			}
-
 			d.Ack(false)
+			err = logMailSendingResult(payload, timeTaken, err)
+			if err != nil {
+				log.Printf(err.Error())
+				continue
+			}
 		}
 	}()
 
@@ -143,10 +149,10 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 	return nil
 }
 
-func sendEnquiryMail(payload EnquiryMailPayload) error {
+func sendEnquiryMail(payload EnquiryMailPayload) (time.Duration, error) {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal payload:[sendEnquiryMail] %v", err)
+		return 0, fmt.Errorf("failed to marshal payload:[sendEnquiryMail] %v", err)
 	}
 
 	mailServiceURL := "http://mailer-service/send"
@@ -154,7 +160,7 @@ func sendEnquiryMail(payload EnquiryMailPayload) error {
 	// request to mail service
 	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("failed to create a HTTP request:[http://mailer-service/send] %v", err)
+		return 0, fmt.Errorf("failed to create a HTTP request:[http://mailer-service/send] %v", err)
 	}
 
 	// set header
@@ -163,17 +169,23 @@ func sendEnquiryMail(payload EnquiryMailPayload) error {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return fmt.Errorf("failed to receive a response from the request:[http://mailer-service/send] %v", err)
+		return 0, fmt.Errorf("failed to receive a response from the request:[http://mailer-service/send] %v", err)
 	}
 	defer response.Body.Close()
 
 	// handle response
 	if response.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("unsuccessful response from the request:[http://mailer-service/send] %v", response.Status)
+		return 0, fmt.Errorf("unsuccessful response from the request:[http://mailer-service/send] %v", response.Status)
 	}
 
-	log.Println("Successfully sent enquiry mail to user.")
-	return nil
+	totalTimeTaken := time.Since(payload.Timestamp)
+	if totalTimeTaken > 90*time.Second {
+		log.Printf("Email sent successfully but exceeded 90 seconds threshold: %v", totalTimeTaken)
+		return totalTimeTaken, fmt.Errorf("email sent successfully but exceeded 90 seconds threshold: %v", totalTimeTaken)
+	}
+
+	log.Println("Successfully sent enquiry mail to user within 90 seconds.")
+	return totalTimeTaken, nil
 
 }
 
@@ -204,5 +216,44 @@ func sendMail(payload MailPayload) error {
 		return fmt.Errorf("unexpected response status:SENDMAIL: %d", response.StatusCode)
 	}
 	log.Println("sent mail via rabbit:LISTENER_SERVICE-MailConsumer")
+	return nil
+}
+
+func logMailSendingResult(payload EnquiryMailPayload, elapsed time.Duration, err error) error {
+	logServiceURL := "http://logger-service/log"
+	logData := fmt.Sprintf("Email to %s: %v, Time taken: %v", payload.To, err, elapsed)
+
+	var test = fmt.Sprintf("Email sent successfully but exceeded 90 seconds threshold: %v", elapsed)
+	if err != nil && err.Error() != test {
+		logData = fmt.Sprintf("Failed to send enquiry mail within 90 seconds. Time taken: %v", elapsed)
+	} else if err != nil {
+		logData = fmt.Sprintf("Failed to send enquiry email to %s and Time taken: %v:[ERROR] %s", payload.To, elapsed, err)
+	} else {
+		logData = fmt.Sprintf("Email to %s sent successfully in %v", payload.To, elapsed)
+	}
+
+	logPayload := LogPayload{
+		Name: "mail_sending_result",
+		Data: logData,
+	}
+
+	jsonData, _ := json.Marshal(logPayload)
+	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request:[Logging-Enquiry-Email-Result]: %v", err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("failed to make HTTP request:[Logging-Enquiry-Email-Result]: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("unexpected response status:[Logging-Enquiry-Email-Result]: %d", response.StatusCode)
+	}
+
 	return nil
 }

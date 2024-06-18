@@ -103,7 +103,7 @@ func logEvent(log LogPayload) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send HTTP request:LOGEVENT: %v", err)
+		return fmt.Errorf("failed to make HTTP request:LOGEVENT: %v", err)
 	}
 	defer resp.Body.Close()
 
