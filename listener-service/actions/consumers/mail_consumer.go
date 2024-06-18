@@ -224,16 +224,16 @@ func logMailSendingResult(payload EnquiryMailPayload, elapsed time.Duration, err
 	logData := fmt.Sprintf("Email to %s: %v, Time taken: %v", payload.To, err, elapsed)
 
 	var test = fmt.Sprintf("Email sent successfully but exceeded 90 seconds threshold: %v", elapsed)
-	if err != nil && err.Error() != test {
+	if err != nil && err.Error() == test {
 		logData = fmt.Sprintf("Failed to send enquiry mail within 90 seconds. Time taken: %v", elapsed)
-	} else if err != nil {
+	} else if err != nil && err.Error() != test {
 		logData = fmt.Sprintf("Failed to send enquiry email to %s and Time taken: %v:[ERROR] %s", payload.To, elapsed, err)
 	} else {
 		logData = fmt.Sprintf("Email to %s sent successfully in %v", payload.To, elapsed)
 	}
 
 	logPayload := LogPayload{
-		Name: "mail_sending_result",
+		Name: "mail-service",
 		Data: logData,
 	}
 

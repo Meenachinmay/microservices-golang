@@ -300,7 +300,7 @@ func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = cc.WriteLog(ctx, &logs.LogRequest{
+	gRPCResponse, err := cc.WriteLog(ctx, &logs.LogRequest{
 		LogEntry: &logs.Log{
 			Name: requestPayload.Log.Name,
 			Data: requestPayload.Log.Data,
@@ -308,13 +308,13 @@ func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
 	})
 
 	if err != nil {
-		helpers.ErrorJSON(c, err)
+		helpers.ErrorJSON(c, errors.New(gRPCResponse.Result))
 		return
 	}
 
 	var payload helpers.JsonResponse
 	payload.Error = false
-	payload.Message = "logged via grpc"
+	payload.Message = "logged via grpc:" + gRPCResponse.Result
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }

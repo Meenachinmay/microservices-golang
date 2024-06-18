@@ -1,84 +1,98 @@
 package main
 
 import (
-	"context"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"database/sql"
+	"errors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"log"
-	"log-service/data"
-	"net/http"
+	"log-service/cmd/api/handlers"
+	"log-service/internal/config"
+	"log-service/internal/database"
+	"os"
 	"time"
 )
 
 const (
-	webPort  = "80"
-	rpcPort  = "5001"
-	mongoURL = "mongodb://mongo:27017"
-	gRpcPort = "50001"
+	GRPCPort = "50001"
 )
 
-var client *mongo.Client
-
-type Config struct {
-	Models data.Models
-}
+var counts int64
 
 func main() {
-	// connect to database (mongodb)
-	mongoClient, err := connectToDB()
-	if err != nil {
-		log.Panic(err)
+	// connect to database
+	conn := connectToDB()
+	defer conn.Close()
+
+	// setting API configuration
+	apiConfig := &config.ApiConfig{
+		DB: database.New(conn),
 	}
 
-	client = mongoClient
-
-	// create a context in order to disconnect
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	// close
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-
-	app := Config{
-		Models: data.New(client),
+	localApiConfig := &handlers.LocalApiConfig{
+		ApiConfig: apiConfig,
 	}
 
-	// start web server
-	log.Println("Starting log service server...")
+	// calling gRPC listener
+	go localApiConfig.GRPCListener()
 
-	go app.gRPCListener()
+	// Initialize the router
+	router := gin.Default()
 
-	srv := &http.Server{
-		Addr:    ":" + webPort,
-		Handler: app.routes(),
-	}
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
-	}
+	// Configure cors
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "*"}, // Specify the exact origin of your Next.js app
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true, // Important: Must be true when credentials are included
+		MaxAge:           12 * time.Hour,
+	}))
 
+	// routes
+	router.POST("/log", localApiConfig.WriteLog)
+
+	// start the server
+	log.Fatal(router.Run(":80"))
 }
 
-func connectToDB() (*mongo.Client, error) {
-	// create connection options
-	clientOptions := options.Client().ApplyURI(mongoURL)
-	clientOptions.SetAuth(options.Credential{
-		Username: "admin",
-		Password: "password",
-	})
+func openDB() (*sql.DB, error) {
+	dbURL := os.Getenv("DATABASE_URL_LOGGER_SERVICE")
+	if dbURL == "" {
+		return nil, errors.New("missing DATABASE_URL")
+	}
 
-	// connect
-	conn, err := mongo.Connect(context.TODO(), clientOptions)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Println("error connecting to database")
 		return nil, err
 	}
 
-	log.Println("connected to database")
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
 
-	return conn, nil
+	return db, nil
+}
+
+func connectToDB() *sql.DB {
+	for {
+		connection, err := openDB()
+		if err != nil {
+			log.Println("Could not connect to database, Postgres is not ready...")
+			counts += 1
+		} else {
+			log.Println("Connected to database...")
+			return connection
+		}
+
+		if counts > 10 {
+			log.Println(err)
+			return nil
+		}
+
+		log.Println("Waiting for database to become ready...")
+		time.Sleep(2 * time.Second)
+		continue
+	}
 }
