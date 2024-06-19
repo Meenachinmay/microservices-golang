@@ -47,6 +47,23 @@ services:
       depends_on:
         - postgres
 
+    enquiry-service:
+      build:
+        context: ./../enquiry-service
+        dockerfile: ./../enquiry-service/enquiry-service.dockerfile
+      restart: always
+      ports:
+        - "8086:80"
+      deploy:
+        mode: replicated
+        replicas: 1
+      env_file:
+        - ./.env
+      environment:
+        DATABASE_URL_LOGGER_SERVICE: ${DATABASE_URL_ENQUIRY_SERVICE}
+      depends_on:
+        - postgres
+
     listener-service:
       build:
         context: ./../listener-service

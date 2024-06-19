@@ -5,6 +5,7 @@ LOGGER_BINARY=loggerApp
 MAIL_BINARY=mailApp
 LISTENER_BINARY=listenerApp
 PAYMENT_BINARY=paymentApp
+ENQUIRY_BINARY=enquiryApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -60,6 +61,12 @@ build_listener:
 build_payment:
 	@echo "Building payment binary..."
 	cd ../payment-service && go build -o ${PAYMENT_BINARY} ./cmd/api
+	@echo "Done!"
+
+## build_enquiry: builds the mail binary as a linux executable
+build_enquiry:
+	@echo "Building enquiry binary..."
+	cd ../enquiry-service && go build -o ${ENQUIRY_BINARY} ./cmd/api
 	@echo "Done!"
 
 
