@@ -7,7 +7,33 @@ package database
 
 import (
 	"context"
+	"time"
 )
+
+const addNewEnquiry = `-- name: AddNewEnquiry :one
+INSERT INTO enquiries (user_id, property_id, enquiry_date, created_at, updated_at)
+VALUES ($1, $2, NOW(), NOW(), NOW())
+RETURNING id, user_id, property_id, enquiry_date, created_at, updated_at
+`
+
+type AddNewEnquiryParams struct {
+	UserID     int32
+	PropertyID int32
+}
+
+func (q *Queries) AddNewEnquiry(ctx context.Context, arg AddNewEnquiryParams) (Enquiry, error) {
+	row := q.db.QueryRowContext(ctx, addNewEnquiry, arg.UserID, arg.PropertyID)
+	var i Enquiry
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PropertyID,
+		&i.EnquiryDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const getAllEnquiries = `-- name: GetAllEnquiries :many
 SELECT id, user_id, property_id, enquiry_date, created_at, updated_at
@@ -87,15 +113,23 @@ FROM enquiries e
 WHERE e.id = $1
 `
 
-func (q *Queries) GetUsersForEnquiry(ctx context.Context, id int32) ([]User, error) {
+type GetUsersForEnquiryRow struct {
+	ID        int32
+	Email     string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetUsersForEnquiry(ctx context.Context, id int32) ([]GetUsersForEnquiryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUsersForEnquiry, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetUsersForEnquiryRow
 	for rows.Next() {
-		var i User
+		var i GetUsersForEnquiryRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Email,

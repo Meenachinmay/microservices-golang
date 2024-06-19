@@ -8,8 +8,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	//"enquiry-service/handlers"
-	//"enquiry-service/config"
 	"log"
 	"os"
 	"time"
