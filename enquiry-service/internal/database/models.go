@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -26,9 +27,10 @@ type Property struct {
 }
 
 type User struct {
-	ID        int32
-	Email     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           int32
+	Email        string
+	Name         string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	EnquiryCount sql.NullInt32
 }

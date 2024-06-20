@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"enquiry-service/config"
 	"enquiry-service/handlers"
+	"enquiry-service/internal/database"
 	"errors"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	//"enquiry-service/handlers"
-	//"enquiry-service/config"
 	"log"
 	"os"
 	"time"
@@ -24,7 +23,11 @@ func main() {
 
 	// setting API configuration
 	apiConfig := &config.ApiConfig{
-		//DB: database.New(conn),
+		DB: database.New(conn),
+	}
+
+	localApiConfig := &handlers.LocalApiConfig{
+		ApiConfig: apiConfig,
 	}
 
 	_ = &handlers.LocalApiConfig{
@@ -44,7 +47,7 @@ func main() {
 	}))
 
 	// routes
-	//router.POST("/log", localApiConfig.WriteLog)
+	router.POST("/handle-enquiry", localApiConfig.HandleANewEnquiry)
 
 	// start the server
 	log.Fatal(router.Run(":80"))
