@@ -8,3 +8,9 @@ RETURNING *;
 SELECT enquiry_count, email, id, name
 FROM users
 WHERE id = $1;
+
+-- name: CountEnquiriesForUserInLastWeek :one
+SELECT COUNT(*)
+FROM enquiries
+WHERE user_id = $1
+  AND enquiry_date >= $2;

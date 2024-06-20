@@ -70,7 +70,6 @@ type PaymentPayload struct {
 
 type LocalApiConfig struct {
 	*config.Config
-	//Producer *kafka.Producer
 }
 
 func (lac *LocalApiConfig) Broker(c *gin.Context) {
@@ -102,6 +101,8 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.sendMailViaRabbit(c, requestPayload.Mail)
 	case "enquiry_mail":
 		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload)
+	case "add_new_enquiry":
+		lac.routeEnquiryToEnquiryService(c, requestPayload.EnquiryPayload)
 
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
@@ -389,6 +390,42 @@ func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail Enquiry
 	var payload helpers.JsonResponse
 	payload.Error = false
 	payload.Message = "enquiry mail has been sent via rabbit"
+
+	helpers.WriteJSON(c, http.StatusAccepted, payload)
+}
+
+func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryPayload EnquiryPayload) {
+	jsonData, _ := json.Marshal(enquiryPayload)
+
+	enquiryServiceURL := "http://enquiry-service/handle-enquiry"
+
+	request, err := http.NewRequest("POST", enquiryServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	defer response.Body.Close()
+
+	// response
+	if response.StatusCode != http.StatusAccepted {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	var payload helpers.JsonResponse
+	payload.Error = false
+	payload.Message = "User updated with email successfully."
+	payload.Data = response
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }

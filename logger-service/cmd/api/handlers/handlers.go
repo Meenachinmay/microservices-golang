@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"log"
 	"log-service/helpers"
 	"log-service/internal/database"
 	"net/http"
@@ -24,8 +23,6 @@ func (apiConfig *LocalApiConfig) WriteLog(c *gin.Context) {
 		helpers.ErrorJSON(c, err)
 		return
 	}
-
-	log.Println(requestPayload)
 
 	// insert into the database
 	newLog, err := apiConfig.DB.InsertLog(c, database.InsertLogParams{

@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-const addNewEnquiry = `-- name: AddNewEnquiry :one
+const createEnquiry = `-- name: CreateEnquiry :one
 INSERT INTO enquiries (user_id, property_id, enquiry_date, created_at, updated_at)
 VALUES ($1, $2, NOW(), NOW(), NOW())
 RETURNING id, user_id, property_id, enquiry_date, created_at, updated_at
 `
 
-type AddNewEnquiryParams struct {
+type CreateEnquiryParams struct {
 	UserID     int32
 	PropertyID int32
 }
 
-func (q *Queries) AddNewEnquiry(ctx context.Context, arg AddNewEnquiryParams) (Enquiry, error) {
-	row := q.db.QueryRowContext(ctx, addNewEnquiry, arg.UserID, arg.PropertyID)
+func (q *Queries) CreateEnquiry(ctx context.Context, arg CreateEnquiryParams) (Enquiry, error) {
+	row := q.db.QueryRowContext(ctx, createEnquiry, arg.UserID, arg.PropertyID)
 	var i Enquiry
 	err := row.Scan(
 		&i.ID,
@@ -70,28 +70,44 @@ func (q *Queries) GetAllEnquiries(ctx context.Context) ([]Enquiry, error) {
 	return items, nil
 }
 
-const getPropertiesForEnquiry = `-- name: GetPropertiesForEnquiry :many
-SELECT DISTINCT p.id, p.name, p.location, p.created_at, p.updated_at
+const getAllEnquiriesForAPropertyByIdWithUsers = `-- name: GetAllEnquiriesForAPropertyByIdWithUsers :many
+SELECT e.id, e.user_id, e.property_id, e.enquiry_date, e.created_at, e.updated_at, u.id, u.email, u.name
 FROM enquiries e
-         JOIN properties p ON e.property_id = p.id
-WHERE e.id = $1
+         JOIN users u ON e.user_id = u.id
+WHERE e.property_id = $1
 `
 
-func (q *Queries) GetPropertiesForEnquiry(ctx context.Context, id int32) ([]Property, error) {
-	rows, err := q.db.QueryContext(ctx, getPropertiesForEnquiry, id)
+type GetAllEnquiriesForAPropertyByIdWithUsersRow struct {
+	ID          int32
+	UserID      int32
+	PropertyID  int32
+	EnquiryDate time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	ID_2        int32
+	Email       string
+	Name        string
+}
+
+func (q *Queries) GetAllEnquiriesForAPropertyByIdWithUsers(ctx context.Context, propertyID int32) ([]GetAllEnquiriesForAPropertyByIdWithUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEnquiriesForAPropertyByIdWithUsers, propertyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Property
+	var items []GetAllEnquiriesForAPropertyByIdWithUsersRow
 	for rows.Next() {
-		var i Property
+		var i GetAllEnquiriesForAPropertyByIdWithUsersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
-			&i.Location,
+			&i.UserID,
+			&i.PropertyID,
+			&i.EnquiryDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ID_2,
+			&i.Email,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -106,36 +122,42 @@ func (q *Queries) GetPropertiesForEnquiry(ctx context.Context, id int32) ([]Prop
 	return items, nil
 }
 
-const getUsersForEnquiry = `-- name: GetUsersForEnquiry :many
-SELECT DISTINCT u.id, u.email, u.name, u.created_at, u.updated_at
+const getAllEnquiriesMadeByAUserByIdWithProperties = `-- name: GetAllEnquiriesMadeByAUserByIdWithProperties :many
+SELECT e.id, e.user_id, e.property_id, e.enquiry_date, e.created_at, e.updated_at, p.name, p.location
 FROM enquiries e
-         JOIN users u ON e.user_id = u.id
-WHERE e.id = $1
+         JOIN properties p ON e.property_id = p.id
+WHERE e.user_id = $1
 `
 
-type GetUsersForEnquiryRow struct {
-	ID        int32
-	Email     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+type GetAllEnquiriesMadeByAUserByIdWithPropertiesRow struct {
+	ID          int32
+	UserID      int32
+	PropertyID  int32
+	EnquiryDate time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Name        string
+	Location    string
 }
 
-func (q *Queries) GetUsersForEnquiry(ctx context.Context, id int32) ([]GetUsersForEnquiryRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUsersForEnquiry, id)
+func (q *Queries) GetAllEnquiriesMadeByAUserByIdWithProperties(ctx context.Context, userID int32) ([]GetAllEnquiriesMadeByAUserByIdWithPropertiesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEnquiriesMadeByAUserByIdWithProperties, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUsersForEnquiryRow
+	var items []GetAllEnquiriesMadeByAUserByIdWithPropertiesRow
 	for rows.Next() {
-		var i GetUsersForEnquiryRow
+		var i GetAllEnquiriesMadeByAUserByIdWithPropertiesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Email,
-			&i.Name,
+			&i.UserID,
+			&i.PropertyID,
+			&i.EnquiryDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Name,
+			&i.Location,
 		); err != nil {
 			return nil, err
 		}

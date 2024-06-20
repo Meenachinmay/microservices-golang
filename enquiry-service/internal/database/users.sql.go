@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const addNewEnquiryToUserById = `-- name: AddNewEnquiryToUserById :one
@@ -29,6 +30,25 @@ func (q *Queries) AddNewEnquiryToUserById(ctx context.Context, id int32) (User, 
 		&i.EnquiryCount,
 	)
 	return i, err
+}
+
+const countEnquiriesForUserInLastWeek = `-- name: CountEnquiriesForUserInLastWeek :one
+SELECT COUNT(*)
+FROM enquiries
+WHERE user_id = $1
+  AND enquiry_date >= $2
+`
+
+type CountEnquiriesForUserInLastWeekParams struct {
+	UserID      int32
+	EnquiryDate time.Time
+}
+
+func (q *Queries) CountEnquiriesForUserInLastWeek(ctx context.Context, arg CountEnquiriesForUserInLastWeekParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countEnquiriesForUserInLastWeek, arg.UserID, arg.EnquiryDate)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getUserByIdWithEnquiry = `-- name: GetUserByIdWithEnquiry :one
