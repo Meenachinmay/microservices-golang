@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"enquiry-service/helpers"
 	"enquiry-service/internal/database"
+	"enquiry-service/mqactions"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -73,6 +75,8 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 	if err != nil {
 		helpers.ErrorJSON(c, errors.New("couldn't get total enquiries"), http.StatusInternalServerError)
 		return
+	} else {
+		log.Printf("total enquiries count is %d for UserId %d", totalEnquiries, updatedUser.ID)
 	}
 
 	// fetch the property detail here - (only this database operation can be saved if we get data from client)
@@ -83,7 +87,7 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 	}
 
 	// prepare notifyPayload (for now it's same as EnquiryEmailPayload)
-	_ = EnquiryMailPayload{
+	mailPayload := EnquiryMailPayload{
 		From:      "chinmayanand896@gmail.com",
 		To:        updatedUser.Email,
 		Subject:   "Thank you for your enquiry.",
@@ -91,10 +95,15 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 		Timestamp: startTimer,
 	}
 
-	// execute communication
-	localApiConfig.notifyUserAboutEnquiry(updatedUser, totalEnquiries)
+	var responsePayload helpers.JsonResponse
+	responsePayload.Error = false
+	responsePayload.Message = "Thank you for your enquiry, We will reach you before you finish your coffee"
+	responsePayload.Data = mailPayload
 
-	// send response to the user
+	helpers.WriteJSON(c, http.StatusAccepted, responsePayload)
+
+	// execute communication
+	go localApiConfig.notifyUserAboutEnquiry(c, updatedUser, totalEnquiries, mailPayload)
 }
 
 func (localApiConfig *LocalApiConfig) getTotalEnquiriesLastWeek(c *gin.Context, updatedUser database.User) (int, error) {
@@ -111,17 +120,33 @@ func (localApiConfig *LocalApiConfig) getTotalEnquiriesLastWeek(c *gin.Context, 
 	return int(count), nil
 }
 
-func (localApiConfig *LocalApiConfig) notifyUserAboutEnquiry(user database.User, totalEnquiries int) {
+func (localApiConfig *LocalApiConfig) notifyUserAboutEnquiry(c *gin.Context, user database.User, totalEnquiries int, mailPayload EnquiryMailPayload) {
 	if totalEnquiries >= 10 {
 		log.Printf("Calling to the user %d...\n", user.ID)
+		return
 	} else if totalEnquiries >= 1 && totalEnquiries <= 3 {
 		log.Printf("Sending sms to the user %d...\n", user.ID)
+		return
 	} else {
-		log.Printf("Sending Email to the user %d...\n", user.Email)
+		log.Printf("Sending Email to the user %s...\n", user.Email)
 		// communicate with mail-service to send an email using rabbitmq.
+		localApiConfig.sendEmail(c, mailPayload)
+		return
 	}
+	return
 }
 
-func (localApiConfig *LocalApiConfig) notifyUserWithEmail(payload EnquiryPayload, userEmailAddress string, propertyDetails database.Property) {
+func (localApiConfig *LocalApiConfig) sendEmail(c *gin.Context, payload EnquiryMailPayload) {
+	emitter, err := mqactions.NewEmitter(localApiConfig.Rabbit, "mail_exchange", "enquiry_mail")
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
 
+	j, _ := json.Marshal(&payload)
+	err = emitter.Emit(string(j))
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
 }

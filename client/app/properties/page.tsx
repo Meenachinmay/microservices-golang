@@ -4,59 +4,59 @@ import PropertyCard from "@/components/Property.card";
 import { useSearchParams } from "next/navigation";
 
 type Property = {
-  uniqueId: string;
+  uniqueId: number;
   name: string;
   location: string;
 };
 
 const properties: Property[] = [
   {
-    uniqueId: "1",
+    uniqueId: 1,
     name: "Sakura Heights",
     location: "Tokyo, Shibuya",
   },
   {
-    uniqueId: "2",
+    uniqueId: 2,
     name: "Hikari Tower",
     location: "Osaka, Namba",
   },
   {
-    uniqueId: "3",
+    uniqueId: 3,
     name: "Fuji Gardens",
     location: "Kyoto, Fushimi",
   },
   {
-    uniqueId: "4",
+    uniqueId: 4,
     name: "Kaze Villa",
     location: "Hokkaido, Sapporo",
   },
   {
-    uniqueId: "5",
+    uniqueId: 5,
     name: "Yuki Residence",
     location: "Fukuoka, Hakata",
   },
   {
-    uniqueId: "6",
+    uniqueId: 6,
     name: "Hana Apartments",
     location: "Nagoya, Naka",
   },
   {
-    uniqueId: "7",
+    uniqueId: 7,
     name: "Umi House",
     location: "Kobe, Chuo",
   },
   {
-    uniqueId: "8",
+    uniqueId: 8,
     name: "Tsubasa Estate",
     location: "Sendai, Aoba",
   },
   {
-    uniqueId: "9",
+    uniqueId: 9,
     name: "Mizu Terrace",
     location: "Yokohama, Minato Mirai",
   },
   {
-    uniqueId: "10",
+    uniqueId: 10,
     name: "Sakura Villa",
     location: "Hiroshima, Naka",
   },
@@ -65,8 +65,8 @@ const properties: Property[] = [
 type EnquiryPayload = {
   action: string;
   enquiry: {
-    user_id: string | null;
-    property_id: string;
+    user_id: number;
+    property_id: number;
     location: string
     name: string;
   };
@@ -78,9 +78,9 @@ function Properties() {
 
   async function handleEnquiry(enquiry: Property) {
     const payload: EnquiryPayload = {
-      action: "enquiry_mail",
+      action: "add_new_enquiry",
       enquiry: {
-        user_id: userId,
+        user_id: Number(userId),
         property_id: enquiry.uniqueId,
         name: enquiry.name,
         location: enquiry.location,

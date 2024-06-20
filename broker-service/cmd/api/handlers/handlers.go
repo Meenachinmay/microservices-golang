@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"io"
 	"net/http"
 	"time"
 )
@@ -43,8 +44,8 @@ type EnquiryMailPayload struct {
 }
 
 type EnquiryPayload struct {
-	UserID     string `json:"user_id"`
-	PropertyID string `json:"property_id"`
+	UserID     int32  `json:"user_id"`
+	PropertyID int32  `json:"property_id"`
 	Name       string `json:"name"`
 	Location   string `json:"location"`
 }
@@ -374,9 +375,9 @@ func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail Enquiry
 	// prepare enquiry email
 	enquiryEmail := EnquiryMailPayload{
 		From:      "chinmayanand896@icloud.com",
-		To:        mail.UserID,
+		To:        "TESTING@EMAIL.COM",
 		Subject:   "Thank you for your enquiry.",
-		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s and Id %s at location %s", mail.Name, mail.PropertyID, mail.Location),
+		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s and Id %d at location %s", mail.Name, mail.PropertyID, mail.Location),
 		Timestamp: time.Now(),
 	}
 
@@ -413,19 +414,25 @@ func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryP
 		helpers.ErrorJSON(c, err)
 		return
 	}
-
-	defer response.Body.Close()
-
 	// response
 	if response.StatusCode != http.StatusAccepted {
 		helpers.ErrorJSON(c, err)
 		return
 	}
+	defer response.Body.Close()
 
-	var payload helpers.JsonResponse
-	payload.Error = false
-	payload.Message = "User updated with email successfully."
-	payload.Data = response
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
 
-	helpers.WriteJSON(c, http.StatusAccepted, payload)
+	var respBody helpers.JsonResponse
+	err = json.Unmarshal(body, &respBody)
+	if err != nil {
+		helpers.ErrorJSON(c, err)
+		return
+	}
+
+	helpers.WriteJSON(c, http.StatusAccepted, respBody)
 }
