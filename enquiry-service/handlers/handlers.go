@@ -150,3 +150,23 @@ func (localApiConfig *LocalApiConfig) sendEmail(c *gin.Context, payload EnquiryM
 		return
 	}
 }
+
+// HandleFetchAllProperties
+// Below is the method to fetch all the enquiries saved in the database.
+// /*
+func (localApiConfig *LocalApiConfig) HandleFetchAllProperties(c *gin.Context) {
+	properties, err := localApiConfig.DB.FetchAllProperties(c)
+	if err != nil {
+		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
+		return
+	}
+
+	propertiesJSON := database.ConvertPropertiesToJSON(properties)
+	responsePayload := helpers.JsonResponse{
+		Error:   false,
+		Message: "Fetched all properties",
+		Data:    propertiesJSON,
+	}
+
+	helpers.WriteJSON(c, http.StatusAccepted, responsePayload)
+}

@@ -7,7 +7,43 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
+
+const fetchAllProperties = `-- name: FetchAllProperties :many
+SELECT id, name, location, created_at, updated_at, fudousan_id
+FROM properties
+`
+
+func (q *Queries) FetchAllProperties(ctx context.Context) ([]Property, error) {
+	rows, err := q.db.QueryContext(ctx, fetchAllProperties)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Property
+	for rows.Next() {
+		var i Property
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Location,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.FudousanID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const getAPropertyDetailsById = `-- name: GetAPropertyDetailsById :one
 SELECT name, location
@@ -25,4 +61,40 @@ func (q *Queries) GetAPropertyDetailsById(ctx context.Context, id int32) (GetAPr
 	var i GetAPropertyDetailsByIdRow
 	err := row.Scan(&i.Name, &i.Location)
 	return i, err
+}
+
+const getAllPropertiesForAFudousan = `-- name: GetAllPropertiesForAFudousan :many
+SELECT id, name, location, created_at, updated_at, fudousan_id
+FROM properties
+WHERE fudousan_id = $1
+`
+
+func (q *Queries) GetAllPropertiesForAFudousan(ctx context.Context, fudousanID sql.NullInt32) ([]Property, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPropertiesForAFudousan, fudousanID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Property
+	for rows.Next() {
+		var i Property
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Location,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.FudousanID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

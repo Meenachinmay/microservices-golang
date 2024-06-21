@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
 	"net/http"
 	"time"
 )
@@ -26,7 +25,10 @@ type RequestPayload struct {
 	Log            LogPayload     `json:"log,omitempty"`
 	Mail           MailPayload    `json:"mail,omitempty"`
 	EnquiryPayload EnquiryPayload `json:"enquiry,omitempty"`
+	Empty          EmptyPayload   `json:"empty,omitempty"`
 }
+
+type EmptyPayload struct{}
 
 type MailPayload struct {
 	From    string `json:"from"`
@@ -104,6 +106,8 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload)
 	case "add_new_enquiry":
 		lac.routeEnquiryToEnquiryService(c, requestPayload.EnquiryPayload)
+	case "fetch-all-properties":
+		lac.FetchAllProperties(c)
 
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
@@ -393,46 +397,4 @@ func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail Enquiry
 	payload.Message = "enquiry mail has been sent via rabbit"
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
-}
-
-func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryPayload EnquiryPayload) {
-	jsonData, _ := json.Marshal(enquiryPayload)
-
-	enquiryServiceURL := "http://enquiry-service/handle-enquiry"
-
-	request, err := http.NewRequest("POST", enquiryServiceURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-	// response
-	if response.StatusCode != http.StatusAccepted {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-
-	var respBody helpers.JsonResponse
-	err = json.Unmarshal(body, &respBody)
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-
-	helpers.WriteJSON(c, http.StatusAccepted, respBody)
 }
