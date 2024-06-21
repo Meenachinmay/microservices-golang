@@ -2,65 +2,15 @@
 
 import PropertyCard from "@/components/Property.card";
 import { useSearchParams } from "next/navigation";
+import {useEffect, useState} from "react";
 
 type Property = {
-  uniqueId: number;
+  id: number
   name: string;
   location: string;
+  fudousan_id: number
 };
 
-const properties: Property[] = [
-  {
-    uniqueId: 1,
-    name: "Sakura Heights",
-    location: "Tokyo, Shibuya",
-  },
-  {
-    uniqueId: 2,
-    name: "Hikari Tower",
-    location: "Osaka, Namba",
-  },
-  {
-    uniqueId: 3,
-    name: "Fuji Gardens",
-    location: "Kyoto, Fushimi",
-  },
-  {
-    uniqueId: 4,
-    name: "Kaze Villa",
-    location: "Hokkaido, Sapporo",
-  },
-  {
-    uniqueId: 5,
-    name: "Yuki Residence",
-    location: "Fukuoka, Hakata",
-  },
-  {
-    uniqueId: 6,
-    name: "Hana Apartments",
-    location: "Nagoya, Naka",
-  },
-  {
-    uniqueId: 7,
-    name: "Umi House",
-    location: "Kobe, Chuo",
-  },
-  {
-    uniqueId: 8,
-    name: "Tsubasa Estate",
-    location: "Sendai, Aoba",
-  },
-  {
-    uniqueId: 9,
-    name: "Mizu Terrace",
-    location: "Yokohama, Minato Mirai",
-  },
-  {
-    uniqueId: 10,
-    name: "Sakura Villa",
-    location: "Hiroshima, Naka",
-  },
-];
 
 type EnquiryPayload = {
   action: string;
@@ -69,6 +19,7 @@ type EnquiryPayload = {
     property_id: number;
     location: string
     name: string;
+    fudousan_id: number
   };
 };
 
@@ -76,14 +27,17 @@ function Properties() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
 
+  const [properties, setProperties] = useState<Property[]>([]);
+
   async function handleEnquiry(enquiry: Property) {
     const payload: EnquiryPayload = {
       action: "add_new_enquiry",
       enquiry: {
-        user_id: Number(userId),
-        property_id: enquiry.uniqueId,
+        user_id: enquiry.id,
+        property_id: enquiry.id,
         name: enquiry.name,
         location: enquiry.location,
+        fudousan_id: enquiry.fudousan_id,
       },
     };
 
@@ -108,6 +62,37 @@ function Properties() {
       throw new Error("ERROR CALLING API");
     }
   }
+
+  useEffect(() => {
+    async function fetchEnquiries(): Promise<void> {
+      const _body = {
+        action: "fetch-all-properties",
+        empty: {}
+      }
+      try {
+        const response = await fetch("http://localhost:8080/handle", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(_body)
+        })
+
+        if (!response.ok) {
+          console.error("error in response...");
+        }
+
+        const result = await response.json();
+        setProperties(result.data)
+      } catch(error) {
+        console.error(error);
+        throw new Error("ERROR CALLING API");
+      }
+    }
+
+    fetchEnquiries()
+
+  }, [userId]);
 
   return (
     <>

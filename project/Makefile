@@ -71,8 +71,6 @@ build_enquiry:
 
 
 
-
-
 ## build_front: builds the front end binary
 build_front:
 	@echo "Building front end binary..."

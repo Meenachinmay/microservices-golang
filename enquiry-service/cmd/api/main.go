@@ -59,6 +59,7 @@ func main() {
 
 	// routes
 	router.POST("/handle-enquiry", localApiConfig.HandleANewEnquiry)
+	router.GET("/fetch-properties", localApiConfig.HandleFetchAllProperties)
 
 	// start the server
 	log.Fatal(router.Run(":80"))

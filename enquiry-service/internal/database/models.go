@@ -19,11 +19,12 @@ type Enquiry struct {
 }
 
 type Property struct {
-	ID        int32
-	Name      string
-	Location  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         int32
+	Name       string
+	Location   string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	FudousanID sql.NullInt32
 }
 
 type User struct {
