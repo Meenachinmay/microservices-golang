@@ -32,6 +32,15 @@ type EnquiryMailPayload struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+type EnquiryMailPayloadUsingSendgrid struct {
+	To               string    `json:"to"`
+	ToName           string    `json:"to_name"`
+	Subject          string    `json:"subject"`
+	PropertyName     string    `json:"name"`
+	PropertyLocation string    `json:"location"`
+	Timestamp        time.Time `json:"timestamp"`
+}
+
 func NewMailConsumer(conn *amqp.Connection) (*MailConsumer, error) {
 	consumer := &MailConsumer{conn: conn}
 	if err := consumer.setup(); err != nil {
@@ -116,7 +125,7 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 
 	go func() {
 		for d := range messages {
-			var payload EnquiryMailPayload
+			var payload EnquiryMailPayloadUsingSendgrid
 			if err := json.Unmarshal(d.Body, &payload); err != nil {
 				log.Printf("Failed to unmarshal message from queue: %v", err)
 				d.Nack(false, false)
@@ -149,18 +158,18 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 	return nil
 }
 
-func sendEnquiryMail(payload EnquiryMailPayload) (time.Duration, error) {
+func sendEnquiryMail(payload EnquiryMailPayloadUsingSendgrid) (time.Duration, error) {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return 0, fmt.Errorf("failed to marshal payload:[sendEnquiryMail] %v", err)
 	}
 
-	mailServiceURL := "http://mailer-service/send"
+	mailServiceURL := "http://mailer-service/send/send-grid"
 
 	// request to mail service
 	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return 0, fmt.Errorf("failed to create a HTTP request:[http://mailer-service/send] %v", err)
+		return 0, fmt.Errorf("failed to create a HTTP request:[http://mailer-service/send/send-grid] %v", err)
 	}
 
 	// set header
@@ -169,13 +178,13 @@ func sendEnquiryMail(payload EnquiryMailPayload) (time.Duration, error) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return 0, fmt.Errorf("failed to receive a response from the request:[http://mailer-service/send] %v", err)
+		return 0, fmt.Errorf("failed to receive a response from the request:[http://mailer-service/send/send-grid] %v", err)
 	}
 	defer response.Body.Close()
 
 	// handle response
 	if response.StatusCode != http.StatusAccepted {
-		return 0, fmt.Errorf("unsuccessful response from the request:[http://mailer-service/send] %v", response.Status)
+		return 0, fmt.Errorf("unsuccessful response from the request:[http://mailer-service/send/send-grid] %v", response.Status)
 	}
 
 	totalTimeTaken := time.Since(payload.Timestamp)
@@ -219,7 +228,7 @@ func sendMail(payload MailPayload) error {
 	return nil
 }
 
-func logMailSendingResult(payload EnquiryMailPayload, elapsed time.Duration, err error) error {
+func logMailSendingResult(payload EnquiryMailPayloadUsingSendgrid, elapsed time.Duration, err error) error {
 	logServiceURL := "http://logger-service/log"
 	logData := fmt.Sprintf("Email to %s: %v, Time taken: %v", payload.To, err, elapsed)
 

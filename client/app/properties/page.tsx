@@ -33,7 +33,7 @@ function Properties() {
     const payload: EnquiryPayload = {
       action: "add_new_enquiry",
       enquiry: {
-        user_id: enquiry.id,
+        user_id: Number(userId),
         property_id: enquiry.id,
         name: enquiry.name,
         location: enquiry.location,
@@ -83,6 +83,7 @@ function Properties() {
         }
 
         const result = await response.json();
+        console.log(result);
         setProperties(result.data)
       } catch(error) {
         console.error(error);
@@ -110,6 +111,7 @@ function Properties() {
                 name={property.name}
                 location={property.location}
                 handleEnquiry={() => handleEnquiry(property)}
+                fudousan_id={property.fudousan_id}
               />
             ))}
           </div>

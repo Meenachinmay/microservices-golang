@@ -6,18 +6,19 @@ import (
 	"enquiry-service/internal/database"
 	"enquiry-service/mqactions"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
 )
 
+// EnquiryPayload This payload we actually receive from frontend
 type EnquiryPayload struct {
 	UserID     int32  `json:"user_id"`
 	PropertyID int32  `json:"property_id"`
 	Name       string `json:"name"`
 	Location   string `json:"location"`
+	FudousanID int32  `json:"fudousan_id"`
 }
 
 type EnquiryMailPayload struct {
@@ -26,6 +27,15 @@ type EnquiryMailPayload struct {
 	Subject   string    `json:"subject"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+type EnquiryMailPayloadUsingSendgrid struct {
+	To               string    `json:"to"`
+	ToName           string    `json:"to_name"`
+	Subject          string    `json:"subject"`
+	PropertyName     string    `json:"name"`
+	PropertyLocation string    `json:"location"`
+	Timestamp        time.Time `json:"timestamp"`
 }
 
 // HandleANewEnquiry To handle a new enquiry we need following data
@@ -37,6 +47,7 @@ type EnquiryMailPayload struct {
     and can save few database operations in this handler. But now for the practice purpose only we are fetching data here inside the handler.
 */
 func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
+	log.Println("entered into the:[enquiry-service:HandleANewEnquiry]")
 	// starting counter
 	var startTimer = time.Now()
 
@@ -44,10 +55,11 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 	var payload EnquiryPayload
 
 	if err := helpers.ReadJSON(c, &payload); err != nil {
+		log.Println("Error reading json:[enquiry-service:HandleANewEnquiry]", err)
 		helpers.ErrorJSON(c, err)
 		return
 	}
-	// validate
+	log.Println("payload loaded.:[DEBUG_LOG]")
 
 	// insert into database
 	newEnquiry, err := localApiConfig.DB.CreateEnquiry(c, database.CreateEnquiryParams{
@@ -85,25 +97,37 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 		helpers.ErrorJSON(c, errors.New("couldn't get property details"), http.StatusInternalServerError)
 		return
 	}
+	log.Println("property found.:[DEBUG_LOG]")
 
 	// prepare notifyPayload (for now it's same as EnquiryEmailPayload)
-	mailPayload := EnquiryMailPayload{
-		From:      "chinmayanand896@gmail.com",
-		To:        updatedUser.Email,
-		Subject:   "Thank you for your enquiry.",
-		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s at location %s", foundProperty.Name, foundProperty.Location),
-		Timestamp: startTimer,
+	//mailPayload := EnquiryMailPayload{
+	//	From:      "chinmayanand896@gmail.com",
+	//	To:        updatedUser.Email,
+	//	Subject:   "Thank you for your enquiry.",
+	//	Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s at location %s", foundProperty.Name, foundProperty.Location),
+	//	Timestamp: startTimer,
+	//}
+
+	mailPayloadForSendgrid := EnquiryMailPayloadUsingSendgrid{
+		To:               "chinmayanand896@gmail.com",
+		ToName:           "Chinmay anand",
+		Subject:          "お問い合わせありがとうございます。",
+		PropertyLocation: foundProperty.Location,
+		PropertyName:     foundProperty.Name,
+		Timestamp:        startTimer,
 	}
 
 	var responsePayload helpers.JsonResponse
 	responsePayload.Error = false
 	responsePayload.Message = "Thank you for your enquiry, We will reach you before you finish your coffee"
-	responsePayload.Data = mailPayload
+	responsePayload.Data = mailPayloadForSendgrid
 
 	helpers.WriteJSON(c, http.StatusAccepted, responsePayload)
+	log.Println("response sent back to api gateway:[DEBUG_LOG]")
 
 	// execute communication
-	go localApiConfig.notifyUserAboutEnquiry(c, updatedUser, totalEnquiries, mailPayload)
+	go localApiConfig.notifyUserAboutEnquiry(c, updatedUser, totalEnquiries, mailPayloadForSendgrid)
+	log.Println("NotifyUserAboutEnquiry:[DEBUG_LOG]")
 }
 
 func (localApiConfig *LocalApiConfig) getTotalEnquiriesLastWeek(c *gin.Context, updatedUser database.User) (int, error) {
@@ -120,7 +144,7 @@ func (localApiConfig *LocalApiConfig) getTotalEnquiriesLastWeek(c *gin.Context, 
 	return int(count), nil
 }
 
-func (localApiConfig *LocalApiConfig) notifyUserAboutEnquiry(c *gin.Context, user database.User, totalEnquiries int, mailPayload EnquiryMailPayload) {
+func (localApiConfig *LocalApiConfig) notifyUserAboutEnquiry(c *gin.Context, user database.User, totalEnquiries int, mailPayload EnquiryMailPayloadUsingSendgrid) {
 	if totalEnquiries >= 10 {
 		log.Printf("Calling to the user %d...\n", user.ID)
 		return
@@ -136,7 +160,7 @@ func (localApiConfig *LocalApiConfig) notifyUserAboutEnquiry(c *gin.Context, use
 	return
 }
 
-func (localApiConfig *LocalApiConfig) sendEmail(c *gin.Context, payload EnquiryMailPayload) {
+func (localApiConfig *LocalApiConfig) sendEmail(c *gin.Context, payload EnquiryMailPayloadUsingSendgrid) {
 	emitter, err := mqactions.NewEmitter(localApiConfig.Rabbit, "mail_exchange", "enquiry_mail")
 	if err != nil {
 		helpers.ErrorJSON(c, err)

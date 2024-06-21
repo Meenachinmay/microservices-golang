@@ -2,7 +2,7 @@ package datamodels
 
 import "time"
 
-type LoadEnquiryType struct {
+type FetchedEnquiryType struct {
 	ID          int32     `json:"id"`
 	UserID      int32     `json:"user_id"`
 	PropertyID  int32     `json:"property_id"`

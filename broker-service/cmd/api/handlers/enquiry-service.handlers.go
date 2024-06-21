@@ -4,12 +4,14 @@ import (
 	"broker/helpers"
 	"broker/internal/config"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
 func (lac *LocalApiConfig) FetchAllProperties(c *gin.Context) {
 	url := config.EnquiryServiceURL + "/fetch-properties"
-	respBody, err := helpers.MakeHTTPRequest(c, config.HttpGet, url)
+	respBody, err := helpers.MakeHTTPRequest(c, config.HttpGet, url, nil)
+	log.Println("After the MakeHTTPRequest method completes")
 	if err != nil {
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
 		return
@@ -19,7 +21,8 @@ func (lac *LocalApiConfig) FetchAllProperties(c *gin.Context) {
 }
 
 func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryPayload EnquiryPayload) {
-	respBody, err := helpers.MakeHTTPRequest(c, config.HttpPost, config.EnquiryServiceURL, enquiryPayload)
+	url := config.EnquiryServiceURL + "/handle-enquiry"
+	respBody, err := helpers.MakeHTTPRequest(c, config.HttpPost, url, enquiryPayload)
 	if err != nil {
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
 		return
