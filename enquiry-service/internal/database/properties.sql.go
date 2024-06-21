@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const fetchAllProperties = `-- name: FetchAllProperties :many
@@ -69,7 +68,7 @@ FROM properties
 WHERE fudousan_id = $1
 `
 
-func (q *Queries) GetAllPropertiesForAFudousan(ctx context.Context, fudousanID sql.NullInt32) ([]Property, error) {
+func (q *Queries) GetAllPropertiesForAFudousan(ctx context.Context, fudousanID int32) ([]Property, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPropertiesForAFudousan, fudousanID)
 	if err != nil {
 		return nil, err

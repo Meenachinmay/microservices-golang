@@ -24,7 +24,7 @@ type Property struct {
 	Location   string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
-	FudousanID sql.NullInt32
+	FudousanID int32
 }
 
 type User struct {

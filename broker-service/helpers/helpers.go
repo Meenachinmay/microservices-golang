@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -84,7 +85,7 @@ func ExtractResponseBody(c *gin.Context, response *http.Response) (JsonResponse,
 	return respBody, nil
 }
 
-func MakeHTTPRequest(c *gin.Context, method string, url string, payload ...interface{}) (*JsonResponse, error) {
+func MakeHTTPRequest(c *gin.Context, method string, url string, payload interface{}) (*JsonResponse, error) {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
@@ -103,10 +104,15 @@ func MakeHTTPRequest(c *gin.Context, method string, url string, payload ...inter
 		return nil, err
 	}
 	defer response.Body.Close()
+	log.Println("Made http request:[MakeHTTPRequest]")
+
+	log.Println("response status code and response:[DEBUG:MakeHTTPRequest]", response.StatusCode, response)
 
 	if response.StatusCode != http.StatusAccepted {
 		return nil, errors.New("received non-accepted status code")
 	}
+
+	log.Println("response status code and response:[DEBUG:MakeHTTPRequest]", response.StatusCode, response)
 
 	respBody, err := ExtractResponseBody(c, response)
 	if err != nil {
