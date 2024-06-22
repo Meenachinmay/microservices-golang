@@ -45,6 +45,9 @@ func main() {
 		ApiConfig: apiConfig,
 	}
 
+	// Initialize grpc
+	go StartGrpcServer()
+
 	// Initialize the router
 	router := gin.Default()
 
