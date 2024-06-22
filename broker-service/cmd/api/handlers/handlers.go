@@ -367,7 +367,6 @@ func (lac *LocalApiConfig) PaymentViaGRPC(c *gin.Context) {
 	payload.Message = "payment processed via grpc" + paymentResponse.String()
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
-
 }
 
 func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail EnquiryPayload) {

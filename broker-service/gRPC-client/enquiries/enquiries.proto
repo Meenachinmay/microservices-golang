@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package enquiries;
+
+option go_package = "/enquiries";
+
+message CustomerEnquiry {
+  int32 user_id = 1;
+  int32 property_id = 2;
+  string name = 3;
+  string location = 4;
+  int32 fudousan_id = 5;
+}
+
+message CustomerEnquiryRequest {
+  CustomerEnquiry enquiry = 1;
+}
+
+message CustomerEnquiryResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+service EnquiryService {
+  rpc HandleCustomerEnquiry (CustomerEnquiryRequest) returns (CustomerEnquiryResponse);
+}
