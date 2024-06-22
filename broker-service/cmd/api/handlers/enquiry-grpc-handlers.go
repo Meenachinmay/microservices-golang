@@ -48,7 +48,7 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
 
 	var payload helpers.JsonResponse
 	payload.Error = false
-	payload.Message = enquiryResponse.String()
+	payload.Message = enquiryResponse.Message
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
