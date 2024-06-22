@@ -41,12 +41,8 @@ func main() {
 		ApiConfig: apiConfig,
 	}
 
-	_ = &handlers.LocalApiConfig{
-		ApiConfig: apiConfig,
-	}
-
 	// Initialize grpc
-	go StartGrpcServer()
+	go StartGrpcServer(localApiConfig)
 
 	// Initialize the router
 	router := gin.Default()

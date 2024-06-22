@@ -1,6 +1,8 @@
 package handlers
 
-import "enquiry-service/config"
+import (
+	"enquiry-service/config"
+)
 
 type LocalApiConfig struct {
 	*config.ApiConfig
