@@ -107,10 +107,10 @@ func (e *EnquiryServer) getTotalEnquiriesLastWeek(c context.Context, updatedUser
 }
 
 func (e *EnquiryServer) notifyUserAboutEnquiry(user database.User, totalEnquiries int, mailPayload EnquiryMailPayloadUsingSendgrid) error {
-	if totalEnquiries >= 10 {
+	if totalEnquiries > 10 {
 		log.Printf("Calling to the user %d...\n", user.ID)
 		return nil
-	} else if totalEnquiries >= 1 && totalEnquiries <= 3 {
+	} else if totalEnquiries >= 1 && totalEnquiries <= 5 {
 		log.Printf("Sending sms to the user %d...\n", user.ID)
 		return nil
 	} else {
