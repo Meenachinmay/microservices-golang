@@ -9,13 +9,13 @@ import (
 	"context"
 )
 
-const getLogs = `-- name: GetLogs :many
+const getAllLogs = `-- name: GetAllLogs :many
 SELECT id, service_name, log_data, created_at, updated_at
 FROM logs
 `
 
-func (q *Queries) GetLogs(ctx context.Context) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLogs)
+func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLogs)
 	if err != nil {
 		return nil, err
 	}

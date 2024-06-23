@@ -5,13 +5,13 @@
 package database
 
 import (
-	"database/sql"
+	"time"
 )
 
 type Log struct {
 	ID          int32
 	ServiceName string
 	LogData     string
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

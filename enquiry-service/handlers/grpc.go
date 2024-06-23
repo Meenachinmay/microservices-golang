@@ -87,7 +87,7 @@ func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enqu
 	//
 	res := &enquiries.CustomerEnquiryResponse{
 		Success: true,
-		Message: "Successfully processed customer enquiry via gRPC.",
+		Message: "We received your enquiry, please wait while we are contacting you back.",
 	}
 	return res, nil
 }

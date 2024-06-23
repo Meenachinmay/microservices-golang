@@ -5,8 +5,11 @@ package logs;
 option go_package = "/logs";
 
 message Log {
-  string name = 1;
-  string data = 2;
+  int32 id = 1;
+  string service_name = 2;
+  string log_data = 3;
+  string created_at = 4;
+  string updated_at = 5;
 }
 
 message LogRequest {
@@ -17,6 +20,13 @@ message LogResponse {
   string result = 1;
 }
 
+message GetAllLogsRequest {}
+
+message GetAllLogsResponse {
+  repeated Log logs = 1;
+}
+
 service LogService {
   rpc WriteLog(LogRequest) returns (LogResponse);
+  rpc GetAllLogs (GetAllLogsRequest) returns (GetAllLogsResponse);
 }

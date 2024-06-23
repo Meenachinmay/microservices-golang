@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// calling gRPC listener
-	go localApiConfig.GRPCListener()
+	go handlers.GRPCListener(localApiConfig)
 
 	// Initialize the router
 	router := gin.Default()

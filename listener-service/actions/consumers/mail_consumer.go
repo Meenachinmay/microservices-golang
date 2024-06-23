@@ -242,8 +242,8 @@ func logMailSendingResult(payload EnquiryMailPayloadUsingSendgrid, elapsed time.
 	}
 
 	logPayload := LogPayload{
-		Name: "mail-service",
-		Data: logData,
+		ServiceName: "mail-service",
+		LogData:     logData,
 	}
 
 	jsonData, _ := json.Marshal(logPayload)
