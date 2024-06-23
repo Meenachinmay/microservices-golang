@@ -22,7 +22,7 @@ import (
 type RequestPayload struct {
 	Action         string         `json:"action"`
 	Auth           AuthPayload    `json:"auth,omitempty"`
-	Log            LogPayload     `json:"log,omitempty"`
+	Log            LogJSONPayload `json:"log,omitempty"`
 	Mail           MailPayload    `json:"mail,omitempty"`
 	EnquiryPayload EnquiryPayload `json:"enquiry,omitempty"`
 	Empty          EmptyPayload   `json:"empty,omitempty"`
@@ -58,9 +58,9 @@ type AuthPayload struct {
 	Password string `json:"password"`
 }
 
-type LogPayload struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+type LogJSONPayload struct {
+	ServiceName string `json:"service_name"`
+	LogData     string `json:"log_data"`
 }
 
 type PaymentPayload struct {
@@ -100,6 +100,9 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 	case "log":
 		//logItem(w, requestPayload.Log)
 		lac.logEventViaRabbit(c, requestPayload.Log)
+	case "fetch-log":
+		//logItem(w, requestPayload.Log)
+		lac.GetAllLogs(c)
 	case "mail":
 		//sendMail(c, requestPayload.Mail)
 		lac.sendMailViaRabbit(c, requestPayload.Mail)
@@ -155,7 +158,7 @@ func sendMail(c *gin.Context, mail MailPayload) {
 }
 
 // log item in log service
-func logItem(c *gin.Context, log LogPayload) {
+func logItem(c *gin.Context, log LogJSONPayload) {
 	jsonData, _ := json.MarshalIndent(log, "", "\t")
 
 	logServiceURL := "http://logger-service/log"
@@ -245,7 +248,7 @@ func authenticate(c *gin.Context, a AuthPayload) {
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
-func (lac *LocalApiConfig) logEventViaRabbit(c *gin.Context, l LogPayload) {
+func (lac *LocalApiConfig) logEventViaRabbit(c *gin.Context, l LogJSONPayload) {
 	emitter, err := actions.NewEmitter(lac.Rabbit, "log_topics", "log.INFO")
 	if err != nil {
 		helpers.ErrorJSON(c, err)
@@ -309,8 +312,8 @@ func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
 
 	gRPCResponse, err := cc.WriteLog(ctx, &logs.LogRequest{
 		LogEntry: &logs.Log{
-			Name: requestPayload.Log.Name,
-			Data: requestPayload.Log.Data,
+			ServiceName: requestPayload.Log.ServiceName,
+			LogData:     requestPayload.Log.LogData,
 		},
 	})
 

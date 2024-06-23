@@ -8,15 +8,10 @@ import (
 	"net/http"
 )
 
-type JSONPayload struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
-}
-
 // WriteLog handle to write log using http
 func (apiConfig *LocalApiConfig) WriteLog(c *gin.Context) {
 	// read json
-	var requestPayload JSONPayload
+	var requestPayload database.LogJSONPayload
 
 	err := helpers.ReadJSON(c, &requestPayload)
 	if err != nil {
@@ -26,8 +21,8 @@ func (apiConfig *LocalApiConfig) WriteLog(c *gin.Context) {
 
 	// insert into the database
 	newLog, err := apiConfig.DB.InsertLog(c, database.InsertLogParams{
-		ServiceName: requestPayload.Name,
-		LogData:     requestPayload.Data,
+		ServiceName: requestPayload.ServiceName,
+		LogData:     requestPayload.LogData,
 	})
 	if err != nil {
 		helpers.ErrorJSON(c, errors.New("error inserting log:[WriteLogHandler]"), http.StatusInternalServerError)

@@ -17,8 +17,8 @@ type LogConsumer struct {
 }
 
 type LogPayload struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+	ServiceName string `json:"service_name"`
+	LogData     string `json:"log_data"`
 }
 
 func NewLogConsumer(conn *amqp.Connection) (*LogConsumer, error) {

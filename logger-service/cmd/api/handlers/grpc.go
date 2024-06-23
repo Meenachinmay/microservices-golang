@@ -2,17 +2,19 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"log-service/internal/database"
 	"log-service/logs"
 	"net"
+	"time"
 )
 
 type LogServer struct {
 	logs.UnimplementedLogServiceServer
-	localApiConfig *LocalApiConfig
+	LocalApiConfig *LocalApiConfig
 }
 
 // WriteLog Handler method to write log using grpc
@@ -20,9 +22,9 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 	input := req.GetLogEntry()
 
 	// insert data here
-	newLog, err := l.localApiConfig.DB.InsertLog(ctx, database.InsertLogParams{
-		ServiceName: input.Name,
-		LogData:     input.Data,
+	newLog, err := l.LocalApiConfig.DB.InsertLog(ctx, database.InsertLogParams{
+		ServiceName: input.ServiceName,
+		LogData:     input.LogData,
 	})
 	if err != nil {
 		res := &logs.LogResponse{Result: "failed to save log via gRPC:[WriteLogGRPCHandler]" + err.Error()}
@@ -34,7 +36,27 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 	return res, nil
 }
 
-func (localApiConfig *LocalApiConfig) GRPCListener() {
+func (l *LogServer) GetAllLogs(ctx context.Context, request *logs.GetAllLogsRequest) (*logs.GetAllLogsResponse, error) {
+	logEntries, err := l.LocalApiConfig.DB.GetAllLogs(ctx)
+	if err != nil {
+		return nil, errors.New("failed to get logs from database:gRPC:[WriteLogGRPCHandler]" + err.Error())
+	}
+
+	var logsResponse []*logs.Log
+	for _, logEntry := range logEntries {
+		logsResponse = append(logsResponse, &logs.Log{
+			Id:          logEntry.ID,
+			ServiceName: logEntry.ServiceName,
+			LogData:     logEntry.LogData,
+			CreatedAt:   logEntry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   logEntry.UpdatedAt.Format(time.RFC3339),
+		})
+	}
+
+	return &logs.GetAllLogsResponse{Logs: logsResponse}, nil
+}
+
+func GRPCListener(localApiConfig *LocalApiConfig) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", "50001"))
 	if err != nil {
 		log.Fatalf("failed to listen on gRPC server: %v", err)
@@ -42,7 +64,9 @@ func (localApiConfig *LocalApiConfig) GRPCListener() {
 
 	server := grpc.NewServer()
 
-	logs.RegisterLogServiceServer(server, &LogServer{})
+	logs.RegisterLogServiceServer(server, &LogServer{
+		LocalApiConfig: localApiConfig,
+	})
 
 	log.Printf("gRPC server listening at %v", lis.Addr())
 

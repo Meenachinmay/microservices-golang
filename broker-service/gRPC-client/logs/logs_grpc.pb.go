@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LogServiceClient interface {
 	WriteLog(ctx context.Context, in *LogRequest, opts ...grpc.CallOption) (*LogResponse, error)
+	GetAllLogs(ctx context.Context, in *GetAllLogsRequest, opts ...grpc.CallOption) (*GetAllLogsResponse, error)
 }
 
 type logServiceClient struct {
@@ -42,11 +43,21 @@ func (c *logServiceClient) WriteLog(ctx context.Context, in *LogRequest, opts ..
 	return out, nil
 }
 
+func (c *logServiceClient) GetAllLogs(ctx context.Context, in *GetAllLogsRequest, opts ...grpc.CallOption) (*GetAllLogsResponse, error) {
+	out := new(GetAllLogsResponse)
+	err := c.cc.Invoke(ctx, "/logs.LogService/GetAllLogs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LogServiceServer is the server API for LogService service.
 // All implementations must embed UnimplementedLogServiceServer
 // for forward compatibility
 type LogServiceServer interface {
 	WriteLog(context.Context, *LogRequest) (*LogResponse, error)
+	GetAllLogs(context.Context, *GetAllLogsRequest) (*GetAllLogsResponse, error)
 	mustEmbedUnimplementedLogServiceServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedLogServiceServer struct {
 
 func (UnimplementedLogServiceServer) WriteLog(context.Context, *LogRequest) (*LogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteLog not implemented")
+}
+func (UnimplementedLogServiceServer) GetAllLogs(context.Context, *GetAllLogsRequest) (*GetAllLogsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllLogs not implemented")
 }
 func (UnimplementedLogServiceServer) mustEmbedUnimplementedLogServiceServer() {}
 
@@ -88,6 +102,24 @@ func _LogService_WriteLog_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LogService_GetAllLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllLogsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LogServiceServer).GetAllLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/logs.LogService/GetAllLogs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LogServiceServer).GetAllLogs(ctx, req.(*GetAllLogsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LogService_ServiceDesc is the grpc.ServiceDesc for LogService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var LogService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WriteLog",
 			Handler:    _LogService_WriteLog_Handler,
+		},
+		{
+			MethodName: "GetAllLogs",
+			Handler:    _LogService_GetAllLogs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
