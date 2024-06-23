@@ -131,9 +131,10 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 				d.Nack(false, false)
 				continue
 			}
-
+			time.Sleep(91 * time.Second)
+			log.Printf("Waiting for 90 seconds...")
 			timeTaken, err := sendEnquiryMail(payload)
-			var test = fmt.Sprintf("email sent successfully but exceeded 90 seconds threshold: %v", timeTaken)
+			var test = fmt.Sprintf("Email sent successfully but exceeded 90 seconds threshold: %v", timeTaken)
 			if err != nil && err.Error() != test {
 				log.Printf("Failed to send enquiry mail: %v", err)
 				d.Nack(false, true)
@@ -190,7 +191,7 @@ func sendEnquiryMail(payload EnquiryMailPayloadUsingSendgrid) (time.Duration, er
 	totalTimeTaken := time.Since(payload.Timestamp)
 	if totalTimeTaken > 90*time.Second {
 		log.Printf("Email sent successfully but exceeded 90 seconds threshold: %v", totalTimeTaken)
-		return totalTimeTaken, fmt.Errorf("email sent successfully but exceeded 90 seconds threshold: %v", totalTimeTaken)
+		return totalTimeTaken, fmt.Errorf("Email sent successfully but exceeded 90 seconds threshold: %v", totalTimeTaken)
 	}
 
 	log.Println("Successfully sent enquiry mail to user within 90 seconds.")
@@ -238,7 +239,7 @@ func logMailSendingResult(payload EnquiryMailPayloadUsingSendgrid, elapsed time.
 	} else if err != nil && err.Error() != test {
 		logData = fmt.Sprintf("Failed to send enquiry email to %s and Time taken: %v:[ERROR] %s", payload.To, elapsed, err)
 	} else {
-		logData = fmt.Sprintf("Email to %s sent successfully in %v", payload.To, elapsed)
+		logData = fmt.Sprintf("Email to %s sent successfully in %v(within 90 seconds.)", payload.To, elapsed)
 	}
 
 	logPayload := LogPayload{
