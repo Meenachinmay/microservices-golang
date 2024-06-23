@@ -3,14 +3,14 @@ package handlers
 import (
 	"broker/helpers"
 	"broker/internal/config"
+	"github.com/Meenachinmay/microservice-shared/routes"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 )
 
 func (lac *LocalApiConfig) FetchAllProperties(c *gin.Context) {
-	url := config.EnquiryServiceURL + "/fetch-properties"
-	respBody, err := helpers.MakeHTTPRequest(c, config.HttpGet, url, nil)
+	respBody, err := helpers.MakeHTTPRequest(c, config.HttpGet, routes.EnquiryServiceFetchAllProperties, nil)
 	log.Println("After the MakeHTTPRequest method completes")
 	if err != nil {
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
