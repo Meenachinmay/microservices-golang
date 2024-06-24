@@ -26,6 +26,7 @@ type User = {
   userId: number,
   preferredMethod: string
   availableTimings: string
+  email: string
 }
 
 function Properties() {
@@ -37,27 +38,18 @@ function Properties() {
      alert("user is not loaded");
      return
     }
-    //
-    // const payload: EnquiryPayload = {
-    //     user_id: Number(user.userId),
-    //     property_id: enquiry.id,
-    //     property_name: enquiry.name,
-    //     property_location: enquiry.location,
-    //     available_timings:user.availableTimings,
-    //     preferred_method:user.preferredMethod,
-    //     fudousan_id: enquiry.fudousan_id,
-    // }
-    //
-    const temp = {
+
+    const payload = {
       action: "create_new_enquiry",
       enquiry: {
-         user_id: Number(user.userId),
+        user_id: Number(user.userId),
         property_id: enquiry.id,
         property_name: enquiry.name,
         property_location: enquiry.location,
         available_timings:user.availableTimings,
         preferred_method:user.preferredMethod,
         fudousan_id: enquiry.fudousan_id,
+        email: user.email,
       }
     }
 
@@ -67,7 +59,7 @@ function Properties() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(temp),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

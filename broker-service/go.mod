@@ -3,7 +3,7 @@ module broker
 go 1.22.0
 
 require (
-	github.com/Meenachinmay/microservice-shared v1.1.3
+	github.com/Meenachinmay/microservice-shared v1.1.4
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/rabbitmq/amqp091-go v1.10.0

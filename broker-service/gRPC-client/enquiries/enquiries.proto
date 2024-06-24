@@ -12,6 +12,7 @@ message CustomerEnquiry {
   string preferred_method = 5;
   string available_timings = 6;
   int32 fudousan_id = 7;
+  string email = 8;
 }
 
 message CustomerEnquiryRequest {

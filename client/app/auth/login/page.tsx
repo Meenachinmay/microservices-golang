@@ -7,6 +7,7 @@ export type User = {
     userId: number,
     preferredMethod: string
     availableTimings: string
+    email: string
 }
 
 function Login() {
@@ -14,13 +15,20 @@ function Login() {
     const [userId, setUserId] = useState<string>("");
     const [preferredMethod, setPreferredMethod] = useState<string>("");
     const [availableTimings, setAvailableTimings] = useState<string>("");
+    const [email, setEmail] = useState<string>("")
 
     const handleSubmit = () => {
         let user: User = {
             userId: Number(userId),
             preferredMethod: preferredMethod,
-            availableTimings: availableTimings
+            availableTimings: availableTimings,
+            email: email,
         }
+
+        if (localStorage.getItem("current_user")) {
+            localStorage.setItem("current_user", "");
+        }
+
         localStorage.setItem("current_user", JSON.stringify(user));
         router.push("/properties")
     }
@@ -28,7 +36,8 @@ function Login() {
     return (
         <>
             <main className="flex w-full min-h-screen bg-white">
-                <div className="flex flex-col space-y-5 items-center justify-center w-1/2 h-[100vh] bg-gradient-to-t from-gray-50 via-gray-100 to-gray-200 p-12">
+                <div
+                    className="flex flex-col space-y-5 items-center justify-center w-1/2 h-[100vh] bg-gradient-to-t from-gray-50 via-gray-100 to-gray-200 p-12">
                     <input
                         onChange={(e) => setUserId(e.target.value)}
                         type="text"
@@ -43,6 +52,13 @@ function Login() {
                         className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
                         required
                     />
+                    <input
+                        onChange={(e) => setEmail(e.target.value)}
+                        type="email"
+                        placeholder="Enter email"
+                        className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
+                        required
+                    />
                     <select
                         required
                         onChange={(e) => setPreferredMethod(e.target.value)}
@@ -54,7 +70,9 @@ function Login() {
                         <option value={"sms"}>Sms</option>
                         <option value={"email"}>Email</option>
                     </select>
-                    <button onClick={handleSubmit} className="w-full h-[69px] bg-orange-800 font-bold text-2xl hover:bg-orange-700">Go</button>
+                    <button onClick={handleSubmit}
+                            className="w-full h-[69px] bg-orange-800 font-bold text-2xl hover:bg-orange-700">Go
+                    </button>
                 </div>
                 <div className="flex flex-col items-center justify-center w-1/2 h-[100vh] bg-orange-800 p-24">
                     <div className="flex flex-col">
