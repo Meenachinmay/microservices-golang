@@ -6,28 +6,20 @@ import (
 	"enquiry-service/internal/database"
 	"enquiry-service/mqactions"
 	"errors"
+	"github.com/Meenachinmay/microservice-shared/types"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
 )
 
-// EnquiryPayload This payload we actually receive from frontend
-type EnquiryPayload struct {
-	UserID     int32  `json:"user_id"`
-	PropertyID int32  `json:"property_id"`
-	Name       string `json:"name"`
-	Location   string `json:"location"`
-	FudousanID int32  `json:"fudousan_id"`
-}
-
-type EnquiryMailPayload struct {
-	From      string    `json:"from"`
-	To        string    `json:"to"`
-	Subject   string    `json:"subject"`
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
-}
+//type EnquiryMailPayload struct {
+//	From      string    `json:"from"`
+//	To        string    `json:"to"`
+//	Subject   string    `json:"subject"`
+//	Message   string    `json:"message"`
+//	Timestamp time.Time `json:"timestamp"`
+//}
 
 type EnquiryMailPayloadUsingSendgrid struct {
 	To               string    `json:"to"`
@@ -52,7 +44,7 @@ func (localApiConfig *LocalApiConfig) HandleANewEnquiry(c *gin.Context) {
 	var startTimer = time.Now()
 
 	// read json
-	var payload EnquiryPayload
+	var payload types.EnquiryPayload
 
 	if err := helpers.ReadJSON(c, &payload); err != nil {
 		log.Println("Error reading json:[enquiry-service:HandleANewEnquiry]", err)

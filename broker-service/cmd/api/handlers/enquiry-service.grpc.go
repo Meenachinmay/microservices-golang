@@ -15,14 +15,6 @@ import (
 )
 
 func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context, enquiryPayload types.EnquiryPayload) {
-	//var enquiryPayload types.EnquiryPayload
-
-	//err := helpers.ReadJSON(c, &enquiryPayload)
-	//if err != nil {
-	//	helpers.ErrorJSON(c, err)
-	//	return
-	//}
-	log.Printf("loaded json payload for enquiry:[EnquiryViaGRPC]%+v\n", enquiryPayload)
 
 	conn, err := grpc.NewClient("enquiry-service:50003", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -46,6 +38,7 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context, enquiryPayload types.E
 			PreferredMethod:  enquiryPayload.PreferredMethod,
 			AvailableTimings: enquiryPayload.AvailabelTimings,
 			FudousanId:       enquiryPayload.FudousanID,
+			Email:            enquiryPayload.Email,
 		},
 	})
 

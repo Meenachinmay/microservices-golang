@@ -66,7 +66,7 @@ func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enqu
 
 	//
 	mailPayloadForSendgrid := EnquiryMailPayloadUsingSendgrid{
-		To:               "chinmayanand896@gmail.com",
+		To:               input.Email,
 		ToName:           "Chinmay anand",
 		Subject:          "お問い合わせありがとうございます。",
 		PropertyLocation: input.Location,
