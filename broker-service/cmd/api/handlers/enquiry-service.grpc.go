@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 	"net/http"
 	"time"
 )
@@ -22,8 +21,6 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context, enquiryPayload types.E
 		return
 	}
 	defer conn.Close()
-
-	log.Println("created grpc connection for enquiry:[EnquiryViaGRPC]")
 
 	cc := enquiries.NewEnquiryServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -42,8 +39,6 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context, enquiryPayload types.E
 		},
 	})
 
-	log.Println("made enquiry:[EnquiryViaGRPC]")
-
 	if err != nil {
 		helpers.ErrorJSON(c, errors.New("Error after making gRPC request from api-gateway to enquiry service"+err.Error()))
 		return
@@ -54,4 +49,5 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context, enquiryPayload types.E
 	payload.Message = enquiryResponse.Message
 
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
+	return
 }

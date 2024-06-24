@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type JsonResponse struct {
@@ -120,4 +121,17 @@ func MakeHTTPRequest(c *gin.Context, method string, url string, payload interfac
 	}
 
 	return &respBody, nil
+}
+
+func ParseDatabaseError(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	switch {
+	case strings.Contains(err.Error(), "pq: duplicate key value violates unique constraint \"users_email_key\""):
+		return "Email already exists"
+	default:
+		return "An unexpected error occurred"
+	}
 }

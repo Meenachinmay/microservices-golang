@@ -1,7 +1,7 @@
 package main
 
 import (
-	enquiries "enquiry-service/enquiries-grpc"
+	"enquiry-service/grpc-proto-files"
 	"enquiry-service/handlers"
 	"google.golang.org/grpc"
 	"log"

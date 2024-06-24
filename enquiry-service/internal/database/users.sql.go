@@ -52,14 +52,70 @@ func (q *Queries) CountEnquiriesForUserInLastWeek(ctx context.Context, arg Count
 	return count, err
 }
 
-const getUserByIdWithEnquiry = `-- name: GetUserByIdWithEnquiry :one
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (email, name, available_timings, preferred_contact_method)
+VALUES ($1, $2, $3, $4)
+RETURNING id, email, name, created_at, updated_at, enquiry_count, available_timings, preferred_contact_method
+`
+
+type CreateUserParams struct {
+	Email                  string
+	Name                   string
+	AvailableTimings       string
+	PreferredContactMethod string
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.Name,
+		arg.AvailableTimings,
+		arg.PreferredContactMethod,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EnquiryCount,
+		&i.AvailableTimings,
+		&i.PreferredContactMethod,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, name, created_at, updated_at, enquiry_count, available_timings, preferred_contact_method
+FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EnquiryCount,
+		&i.AvailableTimings,
+		&i.PreferredContactMethod,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
 SELECT id, email, name, created_at, updated_at, enquiry_count, available_timings, preferred_contact_method
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByIdWithEnquiry(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByIdWithEnquiry, id)
+func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
