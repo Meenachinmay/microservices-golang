@@ -43,6 +43,7 @@ func main() {
 
 	// Initialize grpc
 	go StartGrpcServer(localApiConfig)
+	go StartGrpcUserServer(localApiConfig)
 
 	// Initialize the router
 	router := gin.Default()

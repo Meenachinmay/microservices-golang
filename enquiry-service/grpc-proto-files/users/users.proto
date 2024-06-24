@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "/users";
+
+message CreateUser {
+  string email = 1;
+  string name = 2;
+  string preferred_method = 3;
+  string available_timings = 4;
+}
+
+message CreateUserRequest {
+  CreateUser user = 1;
+}
+
+message User {
+  int32 id = 1;
+  string email = 2;
+  string name = 3;
+  string preferred_method = 4;
+  string available_timings = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateUserResponse {
+  bool success = 1;
+  string message = 2;
+  User user = 3;
+}
+
+service UserService {
+  rpc CreateNewUser (CreateUserRequest) returns (CreateUserResponse);
+}

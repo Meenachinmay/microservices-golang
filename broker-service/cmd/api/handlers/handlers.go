@@ -19,6 +19,7 @@ type RequestPayload struct {
 	Log     LogJSONPayload       `json:"log,omitempty"`
 	Mail    MailPayload          `json:"mail,omitempty"`
 	Enquiry types.EnquiryPayload `json:"enquiry,omitempty"`
+	User    types.UserPayload    `json:"user,omitempty"`
 	Empty   EmptyPayload         `json:"empty,omitempty"`
 }
 
@@ -99,6 +100,8 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.EnquiryViaGRPC(c, requestPayload.Enquiry)
 	case "fetch-all-properties":
 		lac.FetchAllProperties(c)
+	case "create_user":
+		lac.CreateNewUser(c, requestPayload.User)
 
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
