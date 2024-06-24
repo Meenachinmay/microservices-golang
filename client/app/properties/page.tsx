@@ -13,16 +13,13 @@ type Property = {
 
 
 type EnquiryPayload = {
-  action: string;
-  enquiry: {
-    user_id: number;
-    property_id: number;
-    property_location: string
-    property_name: string
-    available_timings: string
-    preferred_method: string
-    fudousan_id: number
-  };
+  user_id: number;
+  property_id: number;
+  property_location: string
+  property_name: string
+  available_timings: string
+  preferred_method: string
+  fudousan_id: number
 };
 
 type User = {
@@ -42,8 +39,6 @@ function Properties() {
     }
 
     const payload: EnquiryPayload = {
-      action: "create_new_enquiry",
-      enquiry: {
         user_id: Number(user.userId),
         property_id: enquiry.id,
         property_name: enquiry.name,
@@ -51,11 +46,10 @@ function Properties() {
         available_timings:user.availableTimings,
         preferred_method:user.preferredMethod,
         fudousan_id: enquiry.fudousan_id,
-      },
-    };
+    }
 
     try {
-      const response = await fetch("http://localhost:8080/handle", {
+      const response = await fetch("http://localhost:8080/enquiry-grpc", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

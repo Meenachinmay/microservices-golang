@@ -20,17 +20,17 @@ func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enqu
 	var startTimer = time.Now()
 
 	input := request.GetEnquiry()
-	log.Printf("Processing customer enquiry:[DEBUG:HandleCustomerEnquiry]")
+	log.Printf("Processing customer enquiry:[DEBUG:HandleCustomerEnquiry]%+v\n", input)
 
 	// database insertion operation here
 	log.Printf("inserting enquiry into database.%+v\n", input)
+
 	// insert into database
 	newEnquiry, err := e.LocalApiConfig.DB.CreateEnquiry(ctx, database.CreateEnquiryParams{
 		UserID:     input.UserId,
 		PropertyID: input.PropertyId,
 	})
 	if err != nil {
-		//
 		res := &enquiries.CustomerEnquiryResponse{
 			Success: false,
 			Message: err.Error() + "Could not insert customer enquiry:[HandlerCustomerEnquiry:GRPC]",

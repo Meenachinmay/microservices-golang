@@ -4,10 +4,12 @@ import (
 	"broker/gRPC-client/enquiries"
 	"broker/helpers"
 	"context"
+	"errors"
 	"github.com/Meenachinmay/microservice-shared/types"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"log"
 	"net/http"
 	"time"
 )
@@ -20,6 +22,7 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
 		helpers.ErrorJSON(c, err)
 		return
 	}
+	log.Printf("loaded json payload for enquiry:[EnquiryViaGRPC]%+v\n", enquiryPayload)
 
 	conn, err := grpc.NewClient("enquiry-service:50003", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -27,6 +30,8 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+
+	log.Println("created grpc connection for enquiry:[EnquiryViaGRPC]")
 
 	cc := enquiries.NewEnquiryServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -44,8 +49,10 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
 		},
 	})
 
+	log.Println("made enquiry:[EnquiryViaGRPC]")
+
 	if err != nil {
-		helpers.ErrorJSON(c, err)
+		helpers.ErrorJSON(c, errors.New("Error after making gRPC request from api-gateway to enquiry service"+err.Error()))
 		return
 	}
 

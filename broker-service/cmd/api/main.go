@@ -58,14 +58,14 @@ func main() {
 	// apply rate limiting middleware here
 	router.Use(middlewares.RateLimitMiddleware(redisClient, 50, time.Minute))
 
-	// routes
+	// HTTP routes
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 	router.POST("/", localApiConfig.Broker)
 	router.POST("/handle", localApiConfig.HandleSubmission)
 
-	// routes for calling grpc services
+	// GRPC routes for calling grpc services
 	router.POST("/log-grpc", localApiConfig.WriteLog)
 	router.POST("/payment-grpc", localApiConfig.PaymentViaGRPC)
 	router.POST("/enquiry-grpc", localApiConfig.EnquiryViaGRPC)
