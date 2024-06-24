@@ -131,8 +131,6 @@ func (consumer *MailConsumer) ConsumeEnquiryMails() error {
 				d.Nack(false, false)
 				continue
 			}
-			time.Sleep(91 * time.Second)
-			log.Printf("Waiting for 90 seconds...")
 			timeTaken, err := sendEnquiryMail(payload)
 			var test = fmt.Sprintf("Email sent successfully but exceeded 90 seconds threshold: %v", timeTaken)
 			if err != nil && err.Error() != test {

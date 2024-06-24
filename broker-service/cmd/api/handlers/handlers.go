@@ -20,12 +20,12 @@ import (
 )
 
 type RequestPayload struct {
-	Action         string               `json:"action"`
-	Auth           AuthPayload          `json:"auth,omitempty"`
-	Log            LogJSONPayload       `json:"log,omitempty"`
-	Mail           MailPayload          `json:"mail,omitempty"`
-	EnquiryPayload types.EnquiryPayload `json:"enquiry,omitempty"`
-	Empty          EmptyPayload         `json:"empty,omitempty"`
+	Action         string         `json:"action"`
+	Auth           AuthPayload    `json:"auth,omitempty"`
+	Log            LogJSONPayload `json:"log,omitempty"`
+	Mail           MailPayload    `json:"mail,omitempty"`
+	EnquiryPayload Enquiry        `json:"enquiry,omitempty"`
+	Empty          EmptyPayload   `json:"empty,omitempty"`
 }
 
 type EmptyPayload struct{}
@@ -43,6 +43,10 @@ type EnquiryMailPayload struct {
 	Subject   string    `json:"subject"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+type Enquiry struct {
+	enquiry types.EnquiryPayload
 }
 
 type AuthPayload struct {
@@ -99,9 +103,10 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		//sendMail(c, requestPayload.Mail)
 		lac.sendMailViaRabbit(c, requestPayload.Mail)
 	case "enquiry_mail":
-		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload)
+		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload.enquiry)
 	case "create_new_enquiry":
-		lac.routeEnquiryToEnquiryService(c, requestPayload.EnquiryPayload)
+		//lac.routeEnquiryToEnquiryService(c, requestPayload.EnquiryPayload)
+		lac.EnquiryViaGRPC(c)
 	case "fetch-all-properties":
 		lac.FetchAllProperties(c)
 
