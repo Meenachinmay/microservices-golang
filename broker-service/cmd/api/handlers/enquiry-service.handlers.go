@@ -4,6 +4,7 @@ import (
 	"broker/helpers"
 	"broker/internal/config"
 	"github.com/Meenachinmay/microservice-shared/routes"
+	"github.com/Meenachinmay/microservice-shared/types"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -20,9 +21,8 @@ func (lac *LocalApiConfig) FetchAllProperties(c *gin.Context) {
 	helpers.WriteJSON(c, http.StatusAccepted, respBody)
 }
 
-func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryPayload EnquiryPayload) {
-	url := config.EnquiryServiceURL + "/handle-enquiry"
-	respBody, err := helpers.MakeHTTPRequest(c, config.HttpPost, url, enquiryPayload)
+func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryPayload types.EnquiryPayload) {
+	respBody, err := helpers.MakeHTTPRequest(c, config.HttpPost, routes.EnquiryServiceHandleEnquiryRoute, enquiryPayload)
 	if err != nil {
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
 		return

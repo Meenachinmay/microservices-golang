@@ -4,6 +4,7 @@ import (
 	"broker/gRPC-client/enquiries"
 	"broker/helpers"
 	"context"
+	"github.com/Meenachinmay/microservice-shared/types"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -12,7 +13,7 @@ import (
 )
 
 func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
-	var enquiryPayload EnquiryPayload
+	var enquiryPayload types.EnquiryPayload
 
 	err := helpers.ReadJSON(c, &enquiryPayload)
 	if err != nil {
@@ -33,11 +34,13 @@ func (lac *LocalApiConfig) EnquiryViaGRPC(c *gin.Context) {
 
 	enquiryResponse, err := cc.HandleCustomerEnquiry(ctx, &enquiries.CustomerEnquiryRequest{
 		Enquiry: &enquiries.CustomerEnquiry{
-			UserId:     enquiryPayload.UserID,
-			PropertyId: enquiryPayload.PropertyID,
-			Name:       enquiryPayload.Name,
-			Location:   enquiryPayload.Location,
-			FudousanId: enquiryPayload.FudousanID,
+			UserId:           enquiryPayload.UserID,
+			PropertyId:       enquiryPayload.PropertyID,
+			Name:             enquiryPayload.PropertyName,
+			Location:         enquiryPayload.PropertyLocation,
+			PreferredMethod:  enquiryPayload.PreferredMethod,
+			AvailableTimings: enquiryPayload.AvailabelTimings,
+			FudousanId:       enquiryPayload.FudousanID,
 		},
 	})
 

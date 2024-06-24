@@ -28,10 +28,12 @@ type Property struct {
 }
 
 type User struct {
-	ID           int32
-	Email        string
-	Name         string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	EnquiryCount sql.NullInt32
+	ID                     int32
+	Email                  string
+	Name                   string
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+	EnquiryCount           sql.NullInt32
+	AvailableTimings       string
+	PreferredContactMethod string
 }

@@ -66,7 +66,7 @@ func main() {
 	router.POST("/handle", localApiConfig.HandleSubmission)
 
 	// routes for calling grpc services
-	router.POST("/log-grpc", localApiConfig.LogViaGRPC)
+	router.POST("/log-grpc", localApiConfig.WriteLog)
 	router.POST("/payment-grpc", localApiConfig.PaymentViaGRPC)
 	router.POST("/enquiry-grpc", localApiConfig.EnquiryViaGRPC)
 

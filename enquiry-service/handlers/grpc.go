@@ -73,6 +73,7 @@ func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enqu
 		PropertyName:     input.Name,
 		Timestamp:        startTimer,
 	}
+
 	// execute communication
 	err = e.notifyUserAboutEnquiry(updatedUser, totalEnquiries, mailPayloadForSendgrid)
 	if err != nil {

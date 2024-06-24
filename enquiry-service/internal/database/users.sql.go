@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -15,7 +14,7 @@ const addNewEnquiryToUserById = `-- name: AddNewEnquiryToUserById :one
 UPDATE users
 SET enquiry_count = enquiry_count + 1, updated_at = NOW()
 WHERE id = $1
-RETURNING id, email, name, created_at, updated_at, enquiry_count
+RETURNING id, email, name, created_at, updated_at, enquiry_count, available_timings, preferred_contact_method
 `
 
 func (q *Queries) AddNewEnquiryToUserById(ctx context.Context, id int32) (User, error) {
@@ -28,6 +27,8 @@ func (q *Queries) AddNewEnquiryToUserById(ctx context.Context, id int32) (User, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.EnquiryCount,
+		&i.AvailableTimings,
+		&i.PreferredContactMethod,
 	)
 	return i, err
 }
@@ -52,26 +53,23 @@ func (q *Queries) CountEnquiriesForUserInLastWeek(ctx context.Context, arg Count
 }
 
 const getUserByIdWithEnquiry = `-- name: GetUserByIdWithEnquiry :one
-SELECT enquiry_count, email, id, name
+SELECT id, email, name, created_at, updated_at, enquiry_count, available_timings, preferred_contact_method
 FROM users
 WHERE id = $1
 `
 
-type GetUserByIdWithEnquiryRow struct {
-	EnquiryCount sql.NullInt32
-	Email        string
-	ID           int32
-	Name         string
-}
-
-func (q *Queries) GetUserByIdWithEnquiry(ctx context.Context, id int32) (GetUserByIdWithEnquiryRow, error) {
+func (q *Queries) GetUserByIdWithEnquiry(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByIdWithEnquiry, id)
-	var i GetUserByIdWithEnquiryRow
+	var i User
 	err := row.Scan(
-		&i.EnquiryCount,
-		&i.Email,
 		&i.ID,
+		&i.Email,
 		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EnquiryCount,
+		&i.AvailableTimings,
+		&i.PreferredContactMethod,
 	)
 	return i, err
 }

@@ -5,7 +5,7 @@ WHERE id = $1
 RETURNING *;
 
 -- name: GetUserByIdWithEnquiry :one
-SELECT enquiry_count, email, id, name
+SELECT *
 FROM users
 WHERE id = $1;
 
