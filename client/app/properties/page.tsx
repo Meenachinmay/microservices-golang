@@ -17,26 +17,39 @@ type EnquiryPayload = {
   enquiry: {
     user_id: number;
     property_id: number;
-    location: string
-    name: string;
+    property_location: string
+    property_name: string
+    available_timings: string
+    preferred_method: string
     fudousan_id: number
   };
 };
 
-function Properties() {
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("userId");
+type User = {
+  userId: number,
+  preferredMethod: string
+  availableTimings: string
+}
 
+function Properties() {
+  const [user, setUser] = useState<User>();
   const [properties, setProperties] = useState<Property[]>([]);
 
   async function handleEnquiry(enquiry: Property) {
+    if (!user) {
+     alert("user is not loaded");
+     return
+    }
+
     const payload: EnquiryPayload = {
-      action: "add_new_enquiry",
+      action: "create_new_enquiry",
       enquiry: {
-        user_id: Number(userId),
+        user_id: Number(user.userId),
         property_id: enquiry.id,
-        name: enquiry.name,
-        location: enquiry.location,
+        property_name: enquiry.name,
+        property_location: enquiry.location,
+        available_timings:user.availableTimings,
+        preferred_method:user.preferredMethod,
         fudousan_id: enquiry.fudousan_id,
       },
     };
@@ -64,6 +77,12 @@ function Properties() {
   }
 
   useEffect(() => {
+    const tempUser = localStorage.getItem("current_user")
+    setUser(JSON.parse(tempUser!));
+    if (user) {
+      console.log("user loaded: " + user);
+    }
+
     async function fetchEnquiries(): Promise<void> {
       const _body = {
         action: "fetch-all-properties",
@@ -93,7 +112,7 @@ function Properties() {
 
     fetchEnquiries()
 
-  }, [userId]);
+  }, [user?.userId]);
 
   return (
     <>

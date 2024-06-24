@@ -9,7 +9,9 @@ message CustomerEnquiry {
   int32 property_id = 2;
   string name = 3;
   string location = 4;
-  int32 fudousan_id = 5;
+  string preferred_method = 5;
+  string available_timings = 6;
+  int32 fudousan_id = 7;
 }
 
 message CustomerEnquiryRequest {

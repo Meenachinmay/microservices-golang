@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"broker/actions"
-	"broker/gRPC-client/logs"
 	_ "broker/gRPC-client/logs"
 	"broker/gRPC-client/payment"
 	"broker/helpers"
@@ -12,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Meenachinmay/microservice-shared/types"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,12 +20,12 @@ import (
 )
 
 type RequestPayload struct {
-	Action         string         `json:"action"`
-	Auth           AuthPayload    `json:"auth,omitempty"`
-	Log            LogJSONPayload `json:"log,omitempty"`
-	Mail           MailPayload    `json:"mail,omitempty"`
-	EnquiryPayload EnquiryPayload `json:"enquiry,omitempty"`
-	Empty          EmptyPayload   `json:"empty,omitempty"`
+	Action         string               `json:"action"`
+	Auth           AuthPayload          `json:"auth,omitempty"`
+	Log            LogJSONPayload       `json:"log,omitempty"`
+	Mail           MailPayload          `json:"mail,omitempty"`
+	EnquiryPayload types.EnquiryPayload `json:"enquiry,omitempty"`
+	Empty          EmptyPayload         `json:"empty,omitempty"`
 }
 
 type EmptyPayload struct{}
@@ -43,14 +43,6 @@ type EnquiryMailPayload struct {
 	Subject   string    `json:"subject"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
-}
-
-type EnquiryPayload struct {
-	UserID     int32  `json:"user_id"`
-	PropertyID int32  `json:"property_id"`
-	Name       string `json:"name"`
-	Location   string `json:"location"`
-	FudousanID int32  `json:"fudousan_id"`
 }
 
 type AuthPayload struct {
@@ -108,7 +100,7 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.sendMailViaRabbit(c, requestPayload.Mail)
 	case "enquiry_mail":
 		lac.sendEnquiryMailViaRabbit(c, requestPayload.EnquiryPayload)
-	case "add_new_enquiry":
+	case "create_new_enquiry":
 		lac.routeEnquiryToEnquiryService(c, requestPayload.EnquiryPayload)
 	case "fetch-all-properties":
 		lac.FetchAllProperties(c)
@@ -290,45 +282,6 @@ func (lac *LocalApiConfig) sendMailViaRabbit(c *gin.Context, mail MailPayload) {
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
-func (lac *LocalApiConfig) LogViaGRPC(c *gin.Context) {
-	var requestPayload RequestPayload
-
-	err := helpers.ReadJSON(c, &requestPayload)
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-
-	conn, err := grpc.NewClient("logger-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		helpers.ErrorJSON(c, err)
-		return
-	}
-	defer conn.Close()
-
-	cc := logs.NewLogServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	gRPCResponse, err := cc.WriteLog(ctx, &logs.LogRequest{
-		LogEntry: &logs.Log{
-			ServiceName: requestPayload.Log.ServiceName,
-			LogData:     requestPayload.Log.LogData,
-		},
-	})
-
-	if err != nil {
-		helpers.ErrorJSON(c, errors.New(gRPCResponse.Result))
-		return
-	}
-
-	var payload helpers.JsonResponse
-	payload.Error = false
-	payload.Message = "logged via grpc:" + gRPCResponse.Result
-
-	helpers.WriteJSON(c, http.StatusAccepted, payload)
-}
-
 func (lac *LocalApiConfig) PaymentViaGRPC(c *gin.Context) {
 	var paymentPayload PaymentPayload
 
@@ -372,7 +325,7 @@ func (lac *LocalApiConfig) PaymentViaGRPC(c *gin.Context) {
 	helpers.WriteJSON(c, http.StatusAccepted, payload)
 }
 
-func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail EnquiryPayload) {
+func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail types.EnquiryPayload) {
 	emitter, err := actions.NewEmitter(lac.Rabbit, "mail_exchange", "enquiry_mail")
 	if err != nil {
 		helpers.ErrorJSON(c, err)
@@ -384,7 +337,7 @@ func (lac *LocalApiConfig) sendEnquiryMailViaRabbit(c *gin.Context, mail Enquiry
 		From:      "chinmayanand896@icloud.com",
 		To:        "TESTING@EMAIL.COM",
 		Subject:   "Thank you for your enquiry.",
-		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s and Id %d at location %s", mail.Name, mail.PropertyID, mail.Location),
+		Message:   fmt.Sprintf("Thank you for your enquiry about propery name %s and Id %d at location %s", mail.PropertyName, mail.PropertyID, mail.PropertyLocation),
 		Timestamp: time.Now(),
 	}
 

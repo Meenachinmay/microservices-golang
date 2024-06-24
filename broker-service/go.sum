@@ -1,7 +1,5 @@
-github.com/Meenachinmay/microservice-shared v0.0.0-20240623012154-7fb50be4fa7b h1:oTgLt7PjhiFj1piP950HXvZY2B3KhOCxRcEn50TDDWk=
-github.com/Meenachinmay/microservice-shared v0.0.0-20240623012154-7fb50be4fa7b/go.mod h1:4B7Fxm6rYOfKZROZgnzSF33Btlk3fUBo08jrpZSvKBY=
-github.com/Meenachinmay/microservice-shared v1.1.0 h1:MCjeuNYRS/1P96rx9sQMp/1sXuBKZgcwZDNOqUIIhqA=
-github.com/Meenachinmay/microservice-shared v1.1.0/go.mod h1:4B7Fxm6rYOfKZROZgnzSF33Btlk3fUBo08jrpZSvKBY=
+github.com/Meenachinmay/microservice-shared v1.1.3 h1:Wcc3sCsDjKW53TdWV8Hwo0QXUHnqLe2A5BoYV4sM3Wg=
+github.com/Meenachinmay/microservice-shared v1.1.3/go.mod h1:4B7Fxm6rYOfKZROZgnzSF33Btlk3fUBo08jrpZSvKBY=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
