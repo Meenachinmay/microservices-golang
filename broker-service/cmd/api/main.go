@@ -68,7 +68,7 @@ func main() {
 	// GRPC routes for calling grpc services
 	router.POST("/log-grpc", localApiConfig.WriteLog)
 	router.POST("/payment-grpc", localApiConfig.PaymentViaGRPC)
-	router.POST("/enquiry-grpc", localApiConfig.EnquiryViaGRPC)
+	//router.POST("/enquiry-grpc", localApiConfig.EnquiryViaGRPC)
 
 	// start the server
 	log.Printf("Starting broker service on port %s\n", webPort)
