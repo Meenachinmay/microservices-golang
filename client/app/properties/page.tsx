@@ -37,24 +37,37 @@ function Properties() {
      alert("user is not loaded");
      return
     }
-
-    const payload: EnquiryPayload = {
-        user_id: Number(user.userId),
+    //
+    // const payload: EnquiryPayload = {
+    //     user_id: Number(user.userId),
+    //     property_id: enquiry.id,
+    //     property_name: enquiry.name,
+    //     property_location: enquiry.location,
+    //     available_timings:user.availableTimings,
+    //     preferred_method:user.preferredMethod,
+    //     fudousan_id: enquiry.fudousan_id,
+    // }
+    //
+    const temp = {
+      action: "create_new_enquiry",
+      enquiry: {
+         user_id: Number(user.userId),
         property_id: enquiry.id,
         property_name: enquiry.name,
         property_location: enquiry.location,
         available_timings:user.availableTimings,
         preferred_method:user.preferredMethod,
         fudousan_id: enquiry.fudousan_id,
+      }
     }
 
     try {
-      const response = await fetch("http://localhost:8080/enquiry-grpc", {
+      const response = await fetch("http://localhost:8080/handle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(temp),
       });
 
       if (!response.ok) {
