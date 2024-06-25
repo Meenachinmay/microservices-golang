@@ -7,4 +7,6 @@ db-data
 ./../client/.next
 ./../client
 
+/client
+
 ./../.idea
