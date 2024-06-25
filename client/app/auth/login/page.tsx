@@ -45,13 +45,17 @@ function Login() {
                         className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
                         required
                     />
-                    <input
+                    <select
                         onChange={(e) => setAvailableTimings(e.target.value)}
-                        type="text"
-                        placeholder="Enter available Time: HH:MM(13:00-15:00)"
-                        className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
-                        required
-                    />
+                        className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-400 font-semibold"
+                    >
+                        <option value={""} selected>
+                            Enter preferred timings for contact
+                        </option>
+                        <option value={"10:00-18:00"}>10:00-18:00</option>
+                        <option value={"15:00-16:00"}>15:00-16:00</option>
+                        <option value={"18:00-19:00"}>18:00-19:00</option>
+                    </select>
                     <input
                         onChange={(e) => setEmail(e.target.value)}
                         type="email"
