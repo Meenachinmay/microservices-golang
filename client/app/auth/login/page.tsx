@@ -55,6 +55,8 @@ function Login() {
                         <option value={"10:00-18:00"}>10:00-18:00</option>
                         <option value={"15:00-16:00"}>15:00-16:00</option>
                         <option value={"18:00-19:00"}>18:00-19:00</option>
+                        <option value={"18:00-23:00"}>18:00-23:00</option>
+                        <option value={"20:00-22:00"}>20:00-22:00</option>
                     </select>
                     <input
                         onChange={(e) => setEmail(e.target.value)}
