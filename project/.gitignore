@@ -4,5 +4,9 @@ db-data
 .env
 db-data
 ./../client/node_modules
+./../client/.next
+./../client
+
+/client
 
 ./../.idea
