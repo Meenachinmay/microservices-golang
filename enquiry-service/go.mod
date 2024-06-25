@@ -3,7 +3,7 @@ module enquiry-service
 go 1.22.0
 
 require (
-	github.com/Meenachinmay/microservice-shared v1.1.7
+	github.com/Meenachinmay/microservice-shared v1.1.10
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/lib/pq v1.10.9
@@ -13,6 +13,8 @@ require (
 )
 
 require (
+	4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f // indirect
+	4d63.com/tz v1.2.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

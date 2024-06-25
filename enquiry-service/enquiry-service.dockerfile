@@ -2,7 +2,10 @@
 FROM golang:1.22-alpine as builder
 
 # Set the timezone
-ENV TZ="Asia/Tokyo"
+ENV TZ=Asia/Tokyo
+
+# install tzdata
+RUN apk add --no-cache tzdata
 
 RUN mkdir /app
 
