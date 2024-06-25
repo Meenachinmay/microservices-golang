@@ -6,6 +6,7 @@ import (
 	"enquiry-service/grpc-proto-files"
 	"enquiry-service/internal/database"
 	"enquiry-service/mqactions"
+	"github.com/Meenachinmay/microservice-shared/utils"
 	"log"
 	"time"
 )
@@ -15,53 +16,36 @@ type EnquiryServer struct {
 	LocalApiConfig *LocalApiConfig
 }
 
+type TimeSlot struct {
+	Start time.Time
+	End   time.Time
+}
+
 func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enquiries.CustomerEnquiryRequest) (*enquiries.CustomerEnquiryResponse, error) {
 	// starting counter
 	var startTimer = time.Now()
 
 	input := request.GetEnquiry()
-	log.Printf("Processing customer enquiry:[DEBUG:HandleCustomerEnquiry]%+v\n", input)
-
-	// database insertion operation here
-	log.Printf("inserting enquiry into database.%+v\n", input)
 
 	// insert into database
-	newEnquiry, err := e.LocalApiConfig.DB.CreateEnquiry(ctx, database.CreateEnquiryParams{
+	_, err := e.LocalApiConfig.DB.CreateEnquiry(ctx, database.CreateEnquiryParams{
 		UserID:     input.UserId,
 		PropertyID: input.PropertyId,
 	})
 	if err != nil {
-		res := &enquiries.CustomerEnquiryResponse{
-			Success: false,
-			Message: err.Error() + "Could not insert customer enquiry:[HandlerCustomerEnquiry:GRPC]",
-		}
-		return res, err
-	} else {
-		log.Println("new enquiry created:[HandleCustomerEnquiry:GRPC]", newEnquiry)
+		return nil, err
 	}
 
 	// update the count of total enquiries made by current user
 	updatedUser, err := e.LocalApiConfig.DB.AddNewEnquiryToUserById(ctx, input.UserId)
 	if err != nil {
-		res := &enquiries.CustomerEnquiryResponse{
-			Success: false,
-			Message: err.Error() + "Could not update user enquiry count for new customer enquiry:[HandlerCustomerEnquiry:GRPC]",
-		}
-		return res, err
-	} else {
-		log.Println("enquiry count updated for user", updatedUser)
+		return nil, err
 	}
 
 	// decide user communication
 	totalEnquiries, err := e.getTotalEnquiriesLastWeek(ctx, updatedUser)
 	if err != nil {
-		res := &enquiries.CustomerEnquiryResponse{
-			Success: false,
-			Message: err.Error() + "Could not fetch user total enquiry count for new customer enquiry:[HandlerCustomerEnquiry:GRPC]",
-		}
-		return res, err
-	} else {
-		log.Printf("total enquiries count is %d for UserId %d", totalEnquiries, updatedUser.ID)
+		return nil, err
 	}
 
 	//
@@ -75,15 +59,10 @@ func (e *EnquiryServer) HandleCustomerEnquiry(ctx context.Context, request *enqu
 	}
 
 	// execute communication
-	err = e.notifyUserAboutEnquiry(updatedUser, totalEnquiries, mailPayloadForSendgrid)
+	err = e.notifyUserAboutEnquiry(input, totalEnquiries, mailPayloadForSendgrid)
 	if err != nil {
-		res := &enquiries.CustomerEnquiryResponse{
-			Success: false,
-			Message: err.Error() + "error in sending producing email to rabbitmq new customer enquiry:[HandlerCustomerEnquiry:GRPC]",
-		}
-		return res, err
+		return nil, err
 	}
-	log.Println("NotifyUserAboutEnquiry:[DEBUG_LOG]")
 
 	//
 	res := &enquiries.CustomerEnquiryResponse{
@@ -107,22 +86,6 @@ func (e *EnquiryServer) getTotalEnquiriesLastWeek(c context.Context, updatedUser
 	return int(count), nil
 }
 
-func (e *EnquiryServer) notifyUserAboutEnquiry(user database.User, totalEnquiries int, mailPayload EnquiryMailPayloadUsingSendgrid) error {
-	if totalEnquiries > 10 {
-		log.Printf("Calling to the user %d...\n", user.ID)
-		return nil
-	} else if totalEnquiries >= 1 && totalEnquiries <= 5 {
-		log.Printf("Sending sms to the user %d...\n", user.ID)
-		return nil
-	} else {
-		log.Printf("Sending Email to the user %s...\n", user.Email)
-		// communicate with mail-service to send an email using rabbitmq.
-		err := e.sendEmail(mailPayload)
-		return err
-	}
-	return nil
-}
-
 func (e *EnquiryServer) sendEmail(payload EnquiryMailPayloadUsingSendgrid) error {
 	emitter, err := mqactions.NewEmitter(e.LocalApiConfig.Rabbit, "mail_exchange", "enquiry_mail")
 	if err != nil {
@@ -134,5 +97,38 @@ func (e *EnquiryServer) sendEmail(payload EnquiryMailPayloadUsingSendgrid) error
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (e *EnquiryServer) notifyUserAboutEnquiry(input *enquiries.CustomerEnquiry, totalEnquiries int, mailPayload EnquiryMailPayloadUsingSendgrid) error {
+
+	// ------------------------------------------------------------------
+	timeSlotStr := input.AvailableTimings
+	if utils.CheckIfSlotIsInCurrentTimeWindow(timeSlotStr) {
+		if input.PreferredMethod == "phone" {
+			log.Printf("Calling to the user %d...\n", input.UserId)
+			return nil
+		} else if input.PreferredMethod == "email" {
+			log.Printf("Sending Email to the user %d...\n", input.UserId)
+			// communicate with mail-service to send an email using rabbitmq.
+			err := e.sendEmail(mailPayload)
+			return err
+		} else {
+			log.Printf("Sending sms to the user %d...\n", input.UserId)
+			return nil
+		}
+	} else {
+		if input.PreferredMethod == "phone" {
+			log.Printf("Scheduling Calling to the user %d for time slot %s\n", input.UserId, input.AvailableTimings)
+			return nil
+		} else if input.PreferredMethod == "email" {
+			log.Printf("Scheduling Email to the user %d for time slot %s\n", input.UserId, input.AvailableTimings)
+			return nil
+		} else {
+			log.Printf("Scheduling sms to the user %d for the time slot %s\n", input.UserId, input.AvailableTimings)
+			return nil
+		}
+	}
+
 	return nil
 }

@@ -1,6 +1,9 @@
 # base go image
 FROM golang:1.22-alpine as builder
 
+# Set the timezone
+ENV TZ="Asia/Tokyo"
+
 RUN mkdir /app
 
 COPY . /app

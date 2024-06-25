@@ -61,6 +61,7 @@ services:
         - ./.env
       environment:
         DATABASE_URL_LOGGER_SERVICE: ${DATABASE_URL_ENQUIRY_SERVICE}
+        TZ: Asia/Tokyo
       depends_on:
         - postgres
 
