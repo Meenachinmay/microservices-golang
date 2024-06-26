@@ -44,6 +44,7 @@ services:
         - ./.env
       environment:
         DATABASE_URL_LOGGER_SERVICE: ${DATABASE_URL_LOGGER_SERVICE}
+        TZ: Asia/Tokyo
       depends_on:
         - postgres
 
@@ -133,8 +134,10 @@ services:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: password
         POSTGRES_DB: microgolang
+        PGTZ: "Asia/Tokyo"
       volumes:
         - ./db-data/postgres/:/var/lib/postgresql/data/
+#        - ./postgresql.conf:/var/lib/postgresql/data/postgresql.conf
 
     redis:
       image: 'redis:6.2-alpine'
