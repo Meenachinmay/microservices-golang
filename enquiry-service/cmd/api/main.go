@@ -64,7 +64,7 @@ func main() {
 	}))
 
 	// routes
-	router.POST("/handle-enquiry", localApiConfig.HandleANewEnquiry)
+	router.GET("/handle-fetch-tasks", localApiConfig.HandleFetchScheduledTasks)
 	router.GET("/fetch-properties", localApiConfig.HandleFetchAllProperties)
 
 	// start the server

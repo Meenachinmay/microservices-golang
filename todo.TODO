@@ -4,5 +4,6 @@
 [done] based on analysis of {USER} decide [CALLING] | [SMS] | [EMAIL]
     if the current time is in the slot of user's available timings, Just CALL them if CALLING validation passed
 
-[] fetch scheduled data to frontend
-[] fetch logs on the client side to show logs
+### More features -
+[] Create a web-socket server in enquiry-service to update the client in real time for scheduled tasks.
+[] Create UI design for showing logs and scheduled tasks on frontend

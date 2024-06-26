@@ -42,6 +42,12 @@ func (lac *LocalApiConfig) GetAllLogs(c *gin.Context)
 func (lac *LocalApiConfig) WriteLog(c *gin.Context)
 func (lac *LocalApiConfig) CreateNewUser(c *gin.Context, userPayload types.UserPayload)
 ```
+##### rabbitmq action
+```go
+func (e *Emitter) declareExchange(ch *amqp.Channel) error
+func (e *Emitter) Emit(event string) error
+func NewEmitter(conn *amqp.Connection, exchange, routingKey string) (*Emitter, error)
+```
 
 > ### Enquiry-service
 ##### HTTP

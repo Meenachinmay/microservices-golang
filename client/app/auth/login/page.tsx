@@ -85,15 +85,15 @@ function Login() {
                         <option value={"email"}>Email</option>
                     </select>
                     <button onClick={handleSubmit}
-                            className="w-full h-[69px] bg-orange-800 font-bold text-2xl hover:bg-orange-700">Go
+                            className="w-full h-[69px] bg-orange-800 font-bold text-2xl hover:bg-orange-700 text-white">Go
                     </button>
                 </div>
                 <div className="flex flex-col items-center justify-center w-1/2 h-[100vh] bg-orange-800 p-24">
                     <div className="flex flex-col">
-            <span className="text-xl">
+            <span className="text-xl text-white">
               Enter your userId to enter, so you can make enquires
             </span>
-                        <span className="text-4xl font-semibold">
+                        <span className="text-4xl font-semibold text-white">
               We will reach you within 90 seconds anyhow.
             </span>
                     </div>

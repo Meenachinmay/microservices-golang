@@ -102,6 +102,8 @@ func (lac *LocalApiConfig) HandleSubmission(c *gin.Context) {
 		lac.FetchAllProperties(c)
 	case "create_user":
 		lac.CreateNewUser(c, requestPayload.User)
+	case "fetch-tasks":
+		lac.FetchAllScheduledTasks(c)
 
 	default:
 		helpers.ErrorJSON(c, errors.New("invalid action"))
