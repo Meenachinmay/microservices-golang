@@ -6,6 +6,7 @@ import (
 	"enquiry-service/grpc-proto-files"
 	"enquiry-service/internal/database"
 	"enquiry-service/mqactions"
+	"fmt"
 	"github.com/Meenachinmay/microservice-shared/utils"
 	"log"
 	"time"
@@ -86,7 +87,7 @@ func (e *EnquiryServer) getTotalEnquiriesLastWeek(c context.Context, updatedUser
 	return int(count), nil
 }
 
-func (e *EnquiryServer) sendEmail(payload EnquiryMailPayloadUsingSendgrid) error {
+func (e *EnquiryServer) SendEmail(payload EnquiryMailPayloadUsingSendgrid) error {
 	emitter, err := mqactions.NewEmitter(e.LocalApiConfig.Rabbit, "mail_exchange", "enquiry_mail")
 	if err != nil {
 		return err
@@ -105,30 +106,55 @@ func (e *EnquiryServer) notifyUserAboutEnquiry(input *enquiries.CustomerEnquiry,
 	// ------------------------------------------------------------------
 	timeSlotStr := input.AvailableTimings
 	if utils.CheckIfSlotIsInCurrentTimeWindow(timeSlotStr) {
-		if input.PreferredMethod == "phone" {
-			log.Printf("Calling to the user %d...\n", input.UserId)
-			return nil
-		} else if input.PreferredMethod == "email" {
-			log.Printf("Sending Email to the user %d...\n", input.UserId)
-			// communicate with mail-service to send an email using rabbitmq.
-			err := e.sendEmail(mailPayload)
-			return err
-		} else {
-			log.Printf("Sending sms to the user %d...\n", input.UserId)
-			return nil
-		}
+		return e.executeTask(input, mailPayload)
 	} else {
-		if input.PreferredMethod == "phone" {
-			log.Printf("Scheduling Calling to the user %d for time slot %s\n", input.UserId, input.AvailableTimings)
-			return nil
-		} else if input.PreferredMethod == "email" {
-			log.Printf("Scheduling Email to the user %d for time slot %s\n", input.UserId, input.AvailableTimings)
-			return nil
-		} else {
-			log.Printf("Scheduling sms to the user %d for the time slot %s\n", input.UserId, input.AvailableTimings)
-			return nil
-		}
+		return e.scheduleTask(input, mailPayload)
 	}
 
+	return nil
+	// ------------------------------------------------------------------
+}
+
+func (e *EnquiryServer) executeTask(input *enquiries.CustomerEnquiry, mailPayload EnquiryMailPayloadUsingSendgrid) error {
+	switch input.PreferredMethod {
+	case "email":
+		log.Printf("Sending Email to the user %d...\n", input.UserId)
+		return e.SendEmail(mailPayload)
+	case "phone":
+		log.Printf("Calling to the user %d...\n", input.UserId)
+		return nil
+	case "sms":
+		log.Printf("sending sms to the user %d...\n", input.UserId)
+		return nil
+	default:
+		return fmt.Errorf("invalid preferred method: %s", input.PreferredMethod)
+	}
+
+	return nil
+}
+
+func (e *EnquiryServer) scheduleTask(input *enquiries.CustomerEnquiry, mailPayload EnquiryMailPayloadUsingSendgrid) error {
+	taskDetails := map[string]interface{}{
+		"user_id": input.UserId,
+		"method":  input.PreferredMethod,
+		"payload": mailPayload,
+	}
+
+	taskDetailsJSON, err := json.Marshal(taskDetails)
+	if err != nil {
+		return err
+	}
+
+	_, err = e.LocalApiConfig.DB.CreateSchedule(context.Background(), database.CreateScheduleParams{
+		UserID:        input.UserId,
+		TaskType:      input.PreferredMethod,
+		TaskDetails:   taskDetailsJSON,
+		ScheduledTime: input.AvailableTimings,
+	})
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Scheduled the task %s for user %d at %s.\n", input.PreferredMethod, input.UserId, input.AvailableTimings)
 	return nil
 }

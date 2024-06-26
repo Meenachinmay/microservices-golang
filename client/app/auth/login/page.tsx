@@ -45,19 +45,27 @@ function Login() {
                         className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
                         required
                     />
-                    <select
+                    <input
                         onChange={(e) => setAvailableTimings(e.target.value)}
-                        className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-400 font-semibold"
-                    >
-                        <option value={""} selected>
-                            Enter preferred timings for contact
-                        </option>
-                        <option value={"10:00-18:00"}>10:00-18:00</option>
-                        <option value={"15:00-16:00"}>15:00-16:00</option>
-                        <option value={"18:00-19:00"}>18:00-19:00</option>
-                        <option value={"18:00-23:00"}>18:00-23:00</option>
-                        <option value={"20:00-22:00"}>20:00-22:00</option>
-                    </select>
+                        type="text"
+                        placeholder="Enter Timings"
+                        className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-800 font-semibold"
+                        required
+                    />
+                    {/*<select*/}
+                    {/*    onChange={(e) => setAvailableTimings(e.target.value)}*/}
+                    {/*    className="w-full h-[69px] px-4 border border-gray-300 focus:outline-none text-gray-400 font-semibold"*/}
+                    {/*>*/}
+                    {/*    <option value={""} selected>*/}
+                    {/*        Enter preferred timings for contact*/}
+                    {/*    </option>*/}
+                    {/*    <option value={"10:00-18:00"}>10:00-18:00</option>*/}
+                    {/*    <option value={"15:00-16:00"}>15:00-16:00</option>*/}
+                    {/*    <option value={"18:00-19:00"}>18:00-19:00</option>*/}
+                    {/*    <option value={"18:00-23:00"}>18:00-23:00</option>*/}
+                    {/*    <option value={"20:00-22:00"}>20:00-22:00</option>*/}
+                    {/*    <option value={"12:27-12:30"}>12:27-12:30</option>*/}
+                    {/*</select>*/}
                     <input
                         onChange={(e) => setEmail(e.target.value)}
                         type="email"

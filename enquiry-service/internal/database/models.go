@@ -6,6 +6,7 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -25,6 +26,16 @@ type Property struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	FudousanID int32
+}
+
+type Schedule struct {
+	ID            int32
+	UserID        int32
+	TaskType      string
+	TaskDetails   json.RawMessage
+	ScheduledTime string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type User struct {

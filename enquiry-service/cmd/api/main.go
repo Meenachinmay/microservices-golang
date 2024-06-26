@@ -45,6 +45,12 @@ func main() {
 	go StartGrpcServer(localApiConfig)
 	go StartGrpcUserServer(localApiConfig)
 
+	//Initialize scheduler
+	enquiryServer := &handlers.EnquiryServer{
+		LocalApiConfig: localApiConfig,
+	}
+	go ProcessScheduledTasks(enquiryServer)
+
 	// Initialize the router
 	router := gin.Default()
 
