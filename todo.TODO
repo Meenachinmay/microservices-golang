@@ -1,5 +1,8 @@
-[] Create a user with three things -> ID, PreferredTimings, AvailableTimings in database
-[] When user made a ENQUIRY -> {USER, PROPERTY}
-[] Save ENQUIRY with {USER, PROPERTY}
-[] based on analysis of {USER} decide [CALLING] | [SMS] | [EMAIL]
+[done] Create a user with three things -> ID, PreferredTimings, AvailableTimings in database
+[done] When user made a ENQUIRY -> {USER, PROPERTY}
+[done] Save ENQUIRY with {USER, PROPERTY}
+[done] based on analysis of {USER} decide [CALLING] | [SMS] | [EMAIL]
     if the current time is in the slot of user's available timings, Just CALL them if CALLING validation passed
+
+[] fetch scheduled data to frontend
+[] fetch logs on the client side to show logs
