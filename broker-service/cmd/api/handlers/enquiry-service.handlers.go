@@ -17,7 +17,6 @@ func (lac *LocalApiConfig) FetchAllProperties(c *gin.Context) {
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
 		return
 	}
-
 	helpers.WriteJSON(c, http.StatusAccepted, respBody)
 }
 
@@ -27,6 +26,15 @@ func (lac *LocalApiConfig) routeEnquiryToEnquiryService(c *gin.Context, enquiryP
 		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
 		return
 	}
+	helpers.WriteJSON(c, http.StatusAccepted, respBody)
+}
 
+func (lac *LocalApiConfig) FetchAllScheduledTasks(c *gin.Context) {
+	url := config.EnquiryServiceURL + "/handle-fetch-tasks"
+	respBody, err := helpers.MakeHTTPRequest(c, config.HttpGet, url, nil)
+	if err != nil {
+		helpers.ErrorJSON(c, err, http.StatusInternalServerError)
+		return
+	}
 	helpers.WriteJSON(c, http.StatusAccepted, respBody)
 }

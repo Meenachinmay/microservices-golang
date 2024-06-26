@@ -31,7 +31,7 @@ The architecture is composed of multiple services that communicate with each oth
 
 - **API Gateway**: The entry point for all client requests.
 - **Authentication Service**: Handles user authentication.
-- **Logger Service**: Logs application events.
+- **Logger Service**: Page application events.
 - **Mailer Service**: Sends emails.
 - **Listener Service**: Listens for events from RabbitMQ and processes them.
 - **Payment Service**: Listens for gRPC calls from api-gateway to Process payments using credit card.

@@ -47,7 +47,6 @@ func ProcessScheduledTasks(s *handlers.EnquiryServer) {
 						log.Println("error unmarshalling task details", err.Error())
 						continue
 					}
-					log.Println("task details ", task.TaskDetails)
 
 					var mailPayload handlers.EnquiryMailPayloadUsingSendgrid
 					err = json.Unmarshal(taskDetails.Payload, &mailPayload)
@@ -55,6 +54,7 @@ func ProcessScheduledTasks(s *handlers.EnquiryServer) {
 						log.Println("error unmarshalling task details", err.Error())
 						continue
 					}
+					mailPayload.Timestamp = utils.ConvertToTokyoTime()
 					log.Println("mail payload", mailPayload)
 
 					err = s.SendEmail(mailPayload)
